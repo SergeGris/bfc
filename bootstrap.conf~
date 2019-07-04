@@ -1,0 +1,261 @@
+# Bootstrap configuration.
+
+# Copyright (C) 2006-2019 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+# We don't need these modules.
+avoided_gnulib_modules='
+  --avoid=canonicalize-lgpl
+  --avoid=dummy
+'
+
+# gnulib modules used by this package.
+gnulib_modules="
+  $avoided_gnulib_modules
+  acl
+  alignof
+  alloca
+  announce-gen
+  areadlink
+  argmatch
+  assert
+  autobuild
+  atexit
+  backupfile
+  backup-rename
+  buffer-lcm
+  calloc-gnu
+  canonicalize
+  clean-filename
+  closein
+  closeout
+  config-h
+  configmake
+  crypto/blake2b
+  crypto/md2
+  crypto/md4
+  crypto/md5
+  crypto/md6
+  crypto/sha1
+  crypto/sha256
+  crypto/sha3
+  crypto/sha512
+  ctype
+  die
+  dirent
+  dirname
+  do-release-commit-and-tag
+  dup2
+  dummy
+  errno
+  error
+  exitfail
+  fadvise
+  fclose
+  fcntl
+  fopen
+  fdl
+  file-type
+  filemode
+  filenamecat
+  fopen-safer
+  freopen
+  freopen-safer
+  fts
+  full-read
+  full-write
+  getopt-gnu
+  gettext-h
+  git-version-gen
+  gitlog-to-changelog
+  gnu-make
+  gnu-web-doc-update
+  gnumakefile
+  gnupload
+  host-os
+  inttypes
+  lchmod
+  limits-h
+  locale
+  long-options
+  lstat
+  maintainer-makefile
+  malloc-gnu
+  memcpy
+  memcmp
+  memmove
+  memset
+  non-recursive-gnulib-prefix-hack
+  openat
+  open
+  openat-safer
+  parse-datetime
+  pathmax
+  perl
+  pipe-posix
+  posix-shell
+  posixver
+  progname
+  propername
+  quote
+  quotearg
+  randint
+  readutmp
+  realloc-gnu
+  remove
+  rename
+  renameat
+  renameatu
+  root-dev-ino
+  same-inode
+  savedir
+  selinux-at
+  stat
+  ssize_t
+  stat-macros
+  stat-size
+  stdbool
+  stddef
+  stdint
+  stdio
+  stdlib
+  stdnoreturn
+  strcase
+  string
+  sys_stat
+  sys_types
+  sys_wait
+  tempname
+  unistd
+  unlocked-io
+  utimecmp
+  utimens
+  verify
+  version-etc
+  version-etc-fsf
+  write-any-file
+  xalloc
+  xbinary-io
+  xdectoint
+  xfreopen
+  xfts
+  xstrtol
+  year2038
+  yesno
+"
+
+# Other locale categories that need message catalogs.
+EXTRA_LOCALE_CATEGORIES=LC_TIME
+
+# Additional xgettext options to use.  Use "\\\newline" to break lines.
+XGETTEXT_OPTIONS=$XGETTEXT_OPTIONS'\\\
+ --flag=asnprintf:3:c-format\\\
+ --flag=asprintf:2:c-format\\\
+ --flag=error:3:c-format\\\
+ --flag=error_at_line:5:c-format\\\
+ --flag=vasnprintf:3:c-format\\\
+ --flag=vasprintf:2:c-format\\\
+ --flag=verror:3:c-format\\\
+ --flag=verror_at_line:5:c-format\\\
+ --flag=wrapf:1:c-format\\\
+ --flag=xasprintf:1:c-format\\\
+ --flag=xfprintf:2:c-format\\\
+ --flag=xprintf:1:c-format\\\
+ --from-code=UTF-8\\\
+'
+
+# Append these, since we use the propername module.
+see_manual='"This is a proper name. See the gettext manual, section Names."'
+see_manual=\'"$see_manual"\'
+XGETTEXT_OPTIONS=$XGETTEXT_OPTIONS'\\\
+ --keyword=proper_name:1,'"$see_manual"'\\\
+ --keyword=proper_name_utf8:1,'"$see_manual"'\\\
+'
+
+gnulib_tool_option_extras="--tests-base=gnulib-tests --with-tests --symlink\
+ --makefile-name=gnulib.mk
+"
+
+# Build prerequisites
+buildreq="\
+autoconf   2.64
+automake   1.11.2
+autopoint  0.19.2
+bison      -
+gettext    0.19.2
+git        1.4.4
+gperf      -
+gzip       -
+makeinfo   6.1
+patch      -
+perl       5.5
+rsync      -
+tar        -
+xz         -
+"
+
+bootstrap_post_import_hook ()
+{
+  # Automake requires that ChangeLog exist.
+  touch ChangeLog || return 1
+  # List of coreutils programs.  See heading comments in the invoked
+  # script for more info.  Keep this in sync with the rules in
+  (m4f=m4/progs.m4 mkf=src/progs.mk tmp=progs.tmp \
+    && rm -f $m4f $mkf $tmp-1 $tmp-2 \
+    && build-aux/gen-lists-of-programs.sh --autoconf >$tmp-1 \
+    && build-aux/gen-lists-of-programs.sh --automake >$tmp-2 \
+    && chmod a-w $tmp-1 $tmp-2 \
+    && mv -f $tmp-1 $m4f && mv -f $tmp-2 $mkf)
+
+  # Massage lib/gnulib.mk before using it later in the bootstrapping process.
+  build-aux/prefix-gnulib-mk --lib-name=$gnulib_name lib/$gnulib_mk
+}
+
+
+bootstrap_epilogue()
+{
+  # Since this is a "GNU" package, replace this line
+  #   if LC_ALL=C grep 'GNU @PACKAGE@' $(top_srcdir)/* 2>/dev/null \
+  #      | grep -v 'libtool:' >/dev/null; then
+  # with this:
+  #   if true; then
+  # Why?  That pipeline searches all files in $(top_srcdir), and if you
+  # happen to have large files (or apparently large sparse files), the
+  # first grep may well run out of memory.
+  perl -pi -e 's/if LC_ALL=C grep .GNU .PACKAGE.*; then/if true; then/' \
+    po/Makefile.in.in
+
+  # Add dummy 'install-html' target, required for packages using
+  # non-recursive makefiles with older gettext.
+  # See https://debbugs.gnu.org/25690
+  if ! grep -w 'install-html' po/Makefile.in.in ; then
+    printf 'install-%s:;\n' dvi ps pdf html >> po/Makefile.in.in
+  fi
+
+  # Install our git hooks, as long as "cp" accepts the --backup option,
+  # so that we can back up any existing files.
+  case $(cp --help) in *--backup*) backup=1;; *) backup=0;; esac
+  if test $backup = 1; then
+    hooks=$(cd scripts/git-hooks && git ls-files)
+    for f in $hooks; do
+      # If it is identical, skip it.
+      cmp scripts/git-hooks/$f .git/hooks/$f > /dev/null \
+        && continue
+      cp --backup=numbered scripts/git-hooks/$f .git/hooks
+      chmod a-w .git/hooks/$f
+    done
+  fi
+}
