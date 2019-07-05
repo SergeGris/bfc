@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "compile_asm_i386_linux.h"
+#include "arch/core.h"
 
 static int
 write_binary_file (const char *filename,

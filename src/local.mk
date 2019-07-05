@@ -16,35 +16,21 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-AM_CFLAGS = -pipe -march=native -fopenmp $(WERROR_CFLAGS)
+AM_CFLAGS = -pipe -march=native $(WERROR_CFLAGS)
 
-EXTRA_PROGRAMS =                \
-   $(no_install__progs)         \
-   $(build_if_possible__progs)  \
-   $(default__progs)
+EXTRA_PROGRAMS = bfc
+bin_PROGRAMS = src/bfc
 
-# The user can tweak these lists at configure time.
-bin_PROGRAMS = @bin_PROGRAMS@
-
-noinst_HEADERS =  \
+noinst_HEADERS = \
   src/system.h
 
 CLEANFILES += $(SCRIPTS)
-
-# Also remove these sometimes-built programs.
-# For example, even when excluded, they are built via 'sc_check-AUTHORS'
-# or 'dist'.
-CLEANFILES += $(no_install__progs)
 
 noinst_LIBRARIES += src/libver.a
 nodist_src_libver_a_SOURCES = src/version.c src/version.h
 
 # Tell the linker to omit references to unused shared libraries.
 AM_LDFLAGS = $(IGNORE_UNUSED_LIBRARIES_CFLAGS) -export-dynamic
-
-# Extra libraries needed by more than one program.  Will be updated later.
-copy_ldadd =
-remove_ldadd =
 
 # Sometimes, the expansion of $(LIBINTL) includes -lc which may
 # include modules defining variables like 'optind', so libgnu.a
@@ -53,15 +39,14 @@ remove_ldadd =
 # replacement functions defined in libgnu.a.
 LDADD = src/libver.a lib/libgnu.a $(LIBINTL) lib/libgnu.a
 
-src_bfc_LDADD = $(LDADD)
-
 # Get the release year from lib/version-etc.c.
 RELEASE_YEAR = \
   `sed -n '/.*COPYRIGHT_YEAR = \([0-9][0-9][0-9][0-9]\) };/s//\1/p' \
     $(top_srcdir)/lib/version-etc.c`
 
-src_bfc_SOURCES  = compile_asm_i386_linux.c compiler.c main.c tokenizer.c
-src_bfc_CPPFLAGS = $(AM_CPPFLAGS)
+src_bfc_LDADD   = $(LDADD)
+src_bfc_SOURCES = src/main.c src/arch/x86/compile_asm_x86_linux.c \
+                  src/compiler.c src/tokenizer.c
 
 BUILT_SOURCES += src/version.c
 src/version.c: Makefile
@@ -85,10 +70,5 @@ src/version.h: Makefile
 
 DISTCLEANFILES += src/version.c src/version.h
 MAINTAINERCLEANFILES += $(BUILT_SOURCES)
-
-all_programs = \
-	$(bin_PROGRAMS) \
-	$(bin_SCRIPTS) \
-	$(EXTRA_PROGRAMS)
 
 INSTALL = install -c

@@ -24,11 +24,11 @@ AC_PREREQ([2.69])
 # indicates that it is built from the 219th delta (in _some_ repository)
 # following the v6.9 tag, and that 58ddd is a prefix of the commit SHA1.
 # The explicit URL can be removed when autoconf > 2.69 is released.
-AC_INIT([NG coreutils],
+AC_INIT([bfc],
         m4_esyscmd([build-aux/git-version-gen .tarball-version]),
-        [bug-coreutils@gnu.org],
+        [],
         [bfc],
-        [none])
+        [])
 
 dnl What version of bfc are we building?
 AC_MSG_NOTICE([configuring for bfc $PACKAGE_VERSION])
@@ -61,20 +61,7 @@ AC_PROG_INSTALL
 gl_EARLY
 gl_INIT
 
-# The test suite needs to know if we have a working perl.
-# FIXME: this is suboptimal.  Ideally, we would be able to call gl_PERL
-# with an ACTION-IF-NOT-FOUND argument ...
-have_perl=yes
-case $PERL in *"/missing "*) have_perl=no;; esac
-AM_CONDITIONAL([HAVE_PERL], [test $have_perl = yes])
-
 AC_FUNC_FORK
-
-optional_bin_progs=
-
-############################################################################
-
-bin_PROGRAMS=bfc
 
 # As long as "grep 'PRI[diouxX]' po/*.pot" reports matches in
 # translatable strings, we must use need-formatstring-macros here.

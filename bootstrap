@@ -1,6 +1,6 @@
 #! /bin/sh
 # Print a version string.
-scriptversion=2019-07-04.18; # UTC
+scriptversion=2019-01-04.17; # UTC
 
 # Bootstrap this package from checked-out sources.
 
@@ -49,8 +49,7 @@ me=$0
 
 default_gnulib_url=git://git.sv.gnu.org/gnulib
 
-usage()
-{
+usage() {
   cat <<EOF
 Usage: $me [OPTION]...
 Bootstrap this package from the checked-out sources.
