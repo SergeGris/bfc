@@ -59,17 +59,18 @@ strip_comments (const char *const source)
   for (size_t i = 0; i < size; ++i)
     {
       if (parse_token (source[i]) != T_COMMENT)
-	{
-	  result[index++] = source[i];
-	}
+        {
+          result[index++] = source[i];
+        }
     }
   result[index++] = 0;
   return result;
 }
 
 static int
-append_to_array (const Command cmd, Command ** out_result,
-		 size_t *out_result_len)
+append_to_array (const Command cmd,
+                 Command **out_result,
+                 size_t *out_result_len)
 {
   size_t new_size = *out_result_len + 1;
   Command *tmp = realloc (*out_result, new_size * sizeof (Command));
@@ -86,8 +87,9 @@ append_to_array (const Command cmd, Command ** out_result,
 }
 
 int
-tokenize (const char *const source, Command ** out_result,
-	  size_t *out_result_len)
+tokenize (const char *const source,
+          Command **out_result,
+          size_t *out_result_len)
 {
   /* Count [ and ] commands. Difference should be 0 at the end of the program, so
      that all jumps have a matching label.  */
@@ -127,84 +129,84 @@ tokenize (const char *const source, Command ** out_result,
          Labels and jumps need a number.
          Read and print need nothing.  */
       if (current == T_INC)
-	{
-	  command.value += parse_value (c_current);
-	}
+        {
+          command.value += parse_value (c_current);
+        }
       else if (current == T_POINTER_INC)
-	{
-	  const int value = parse_value (c_current);
-	  command.value += value;
-	}
+        {
+          const int value = parse_value (c_current);
+          command.value += value;
+        }
       else if (current == T_LABEL)
-	{
-	  command.value = opening_label_count++;
-	}
+        {
+          command.value = opening_label_count++;
+        }
       else if (current == T_JUMP)
-	{
-	  ++closing_label_count;
-	  if (closing_label_count > opening_label_count)
-	    {
-	      /* Error: Label mismatch.  */
-	      errorcode = 102;
-	      break;
-	    }
+        {
+          ++closing_label_count;
+          if (closing_label_count > opening_label_count)
+            {
+              /* Error: Label mismatch.  */
+              errorcode = 102;
+              break;
+            }
 
-	  /* Traverse final result backwards to find the correct label.  */
-	  int correct_label = -1;
-	  int open_labels_to_skip = 0;
-	  for (size_t kk = result_len - 1;; --kk)
-	    {
-	      if (result[kk].token == T_JUMP)
-		{
-		  ++open_labels_to_skip;
-		}
-	      else if (result[kk].token == T_LABEL)
-		{
-		  if (open_labels_to_skip-- == 0)
-		    {
-		      correct_label = result[kk].value;
-		      break;
-		    }
-		}
+          /* Traverse final result backwards to find the correct label.  */
+          int correct_label = -1;
+          int open_labels_to_skip = 0;
+          for (size_t kk = result_len - 1;; --kk)
+            {
+              if (result[kk].token == T_JUMP)
+                {
+                  ++open_labels_to_skip;
+                }
+              else if (result[kk].token == T_LABEL)
+                {
+                  if (open_labels_to_skip-- == 0)
+                    {
+                      correct_label = result[kk].value;
+                      break;
+                    }
+                }
 
-	      if (kk == 0)
-		{
-		  break;
-		}
-	    }
-	  if (correct_label < 0)
-	    {
-	      /* Error: Label mismatch */
-	      errorcode = 102;
-	      break;
-	    }
-	  command.value = correct_label;
-	}
+              if (kk == 0)
+                {
+                  break;
+                }
+            }
+          if (correct_label < 0)
+            {
+              /* Error: Label mismatch */
+              errorcode = 102;
+              break;
+            }
+          command.value = correct_label;
+        }
 
       /* Expecting new command: Push previous command to the final result and make a new one.  */
       if (current != next || (current != T_INC && current != T_POINTER_INC))
-	{
-	  if (command.token != T_COMMENT)
-	    {
-	      int err = append_to_array (command, &result, &result_len);
-	      if (err != 0)
-		{
-		  /* Error: Out of memory.  */
-		  errorcode = 101;
-		  break;
-		}
-	    }
-	  command.token = current;
-	  command.value = 0;
-	}
+        {
+          if (command.token != T_COMMENT)
+            {
+              int err = append_to_array (command, &result, &result_len);
+              if (err != 0)
+                {
+                  /* Error: Out of memory.  */
+                  errorcode = 101;
+                  break;
+                }
+            }
+          command.token = current;
+          command.value = 0;
+        }
     }
   if (errorcode == 0)
     {
       if (opening_label_count != closing_label_count)
-	{
-	  /* Error: Label mismatch.  */
-	  errorcode = 102;
-	}
+        {
+          /* Error: Label mismatch.  */
+          errorcode = 102;
+        }
     }
   else
     {
@@ -223,8 +225,10 @@ tokenize (const char *const source, Command ** out_result,
 }
 
 int
-optimize (const Command * const tokens, const size_t tokens_len,
-	  ProgramSource * out_result, const int level)
+optimize (const Command *const tokens,
+          const size_t tokens_len,
+          ProgramSource *out_result,
+          const int level)
 {
   int err = 0;
 
@@ -253,63 +257,63 @@ optimize (const Command * const tokens, const size_t tokens_len,
       bool finished = false;
       int inactive_loop_index = -1;
       for (int round = 0; round < max_passes && !finished; ++round)
-	{
-	  for (size_t i = 0; i < input_len; ++i)
-	    {
-	      const Command current = input_tokens[i];
-	      if (current.token == T_INC || current.token == T_INPUT)
-		{
-		  /* Not inactive */
-		  finished = true;
-		  break;
-		}
-	      else if (current.token == T_LABEL)
-		{
-		  inactive_loop_index = current.value;
-		  break;
-		}
-	    }
-	  bool inside_loop = false;
-	  for (size_t i = 0; i < input_len; ++i)
-	    {
-	      const Command current = input_tokens[i];
-	      if (current.token == T_LABEL
-		  && current.value == inactive_loop_index)
-		{
-		  inside_loop = true;
-		}
-	      if (inside_loop)
-		{
-		  input_tokens[i].token = T_COMMENT;
-		  if (current.token == T_JUMP
-		      && current.value == inactive_loop_index)
-		    {
-		      break;
-		    }
-		}
-	    }
-	}
+        {
+          for (size_t i = 0; i < input_len; ++i)
+            {
+              const Command current = input_tokens[i];
+              if (current.token == T_INC || current.token == T_INPUT)
+                {
+                  /* Not inactive */
+                  finished = true;
+                  break;
+                }
+              else if (current.token == T_LABEL)
+                {
+                  inactive_loop_index = current.value;
+                  break;
+                }
+            }
+          bool inside_loop = false;
+          for (size_t i = 0; i < input_len; ++i)
+            {
+              const Command current = input_tokens[i];
+              if (current.token == T_LABEL
+                  && current.value == inactive_loop_index)
+                {
+                  inside_loop = true;
+                }
+              if (inside_loop)
+                {
+                  input_tokens[i].token = T_COMMENT;
+                  if (current.token == T_JUMP
+                      && current.value == inactive_loop_index)
+                    {
+                      break;
+                    }
+                }
+            }
+        }
 
       /* Find input and print commands.  */
       bool found_input = false, found_print = false;
       for (size_t i = 0; i < input_len; ++i)
-	{
-	  const Command current = input_tokens[i];
+        {
+          const Command current = input_tokens[i];
 
-	  if (current.token == T_INPUT)
-	    {
-	      found_input = true;
-	    }
-	  else if (current.token == T_PRINT)
-	    {
-	      found_print = true;
-	    }
+          if (current.token == T_INPUT)
+            {
+              found_input = true;
+            }
+          else if (current.token == T_PRINT)
+            {
+              found_print = true;
+            }
 
-	  if (found_input && found_print)
-	    {
-	      break;
-	    }
-	}
+          if (found_input && found_print)
+            {
+              break;
+            }
+        }
 
       no_print_commands = !found_print;
       no_input_commands = !found_input;
@@ -322,9 +326,9 @@ optimize (const Command * const tokens, const size_t tokens_len,
       /* Error: Not implemented.  */
       err = 103;
       if (no_print_commands && no_input_commands)
-	{
+        {
 
-	}
+        }
     }
 
   if (err != 0)
@@ -346,9 +350,9 @@ optimize (const Command * const tokens, const size_t tokens_len,
   for (size_t i = 0; i < input_len; ++i)
     {
       if (input_tokens[i].token != T_COMMENT)
-	{
-	  out_result->tokens[index++] = input_tokens[i];
-	}
+        {
+          out_result->tokens[index++] = input_tokens[i];
+        }
     }
 
   out_result->length = index;
@@ -361,8 +365,9 @@ optimize (const Command * const tokens, const size_t tokens_len,
 }
 
 int
-tokenize_and_optimize (const char *const source, ProgramSource * out_result,
-		       const int level)
+tokenize_and_optimize (const char *const source,
+                       ProgramSource *out_result,
+                       const int level)
 {
   out_result->tokens = NULL;
   out_result->length = 0;
@@ -375,8 +380,7 @@ tokenize_and_optimize (const char *const source, ProgramSource * out_result,
       return err;
     }
 
-  err =
-    optimize (tokenized_source, tokenized_source_length, out_result, level);
+  err = optimize (tokenized_source, tokenized_source_length, out_result, level);
   free (tokenized_source);
 
   return err;

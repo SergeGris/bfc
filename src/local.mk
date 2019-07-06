@@ -16,6 +16,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+include $(top_srcdir)/src/arch/local.mk
+
 AM_CFLAGS = -pipe -march=native $(WERROR_CFLAGS)
 
 EXTRA_PROGRAMS = bfc
@@ -45,8 +47,7 @@ RELEASE_YEAR = \
     $(top_srcdir)/lib/version-etc.c`
 
 src_bfc_LDADD   = $(LDADD)
-src_bfc_SOURCES = src/main.c src/arch/x86/compile_asm_x86_linux.c \
-                  src/compiler.c src/tokenizer.c
+src_bfc_SOURCES = src/main.c src/compiler.c src/tokenizer.c $(ARCH_DEPENDENT_SOURCES)
 
 BUILT_SOURCES += src/version.c
 src/version.c: Makefile

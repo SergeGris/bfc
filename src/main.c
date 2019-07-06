@@ -27,18 +27,18 @@
 #define AUTHORS \
   proper_name ("Sergey Sushilin")
 
-char *
+static char *
 read_file (const char *filename)
 {
   char *buffer = NULL;
   size_t length = 0;
-  FILE *handle = fopen (filename, "rb");
+  FILE *handle = fopen (filename, "r");
 
   if (handle != NULL)
     {
-      fseek (handle, 0, SEEK_END);
+      fseek (handle, 0L, SEEK_END);
       length = ftell (handle);
-      fseek (handle, 0, SEEK_SET);
+      fseek (handle, 0L, SEEK_SET);
       buffer = malloc ((length + 1) * sizeof (char));
       if (buffer != NULL)
         {
@@ -56,11 +56,11 @@ read_file (const char *filename)
   return buffer;
 }
 
-const char *
+static const char *
 change_extension (char *filename, const char *new_extension)
 {
   if (filename == NULL || *filename == '\0')
-		return "";
+    return "";
 
   size_t len = strlen (filename);
   char *tmp = filename + len - 1;
@@ -71,7 +71,7 @@ change_extension (char *filename, const char *new_extension)
         {
           ++tmp;
           while ((*tmp++ = *new_extension++) != '\0')
-						;
+            ;
           return filename;
         }
     }
@@ -79,7 +79,7 @@ change_extension (char *filename, const char *new_extension)
   tmp = filename + len;
   *tmp++ = '.';
   while ((*tmp++ = *new_extension++) != '\0')
-		;
+    ;
 
   return filename;
 }
@@ -95,26 +95,28 @@ cut_path (char *str)
   return tmp + 1;
 }
 
-static char *in_filename = NULL;
-static char *out_filename = "a.out";
-static bool assemble_it = true;
-static bool link_it = true;
-static bool save_temps = false;
-static int  optimization_level = 1;
+static char *in_filename               = NULL;
+static char *out_filename              = "a.out";
+static char *out_asm                   = NULL;
+static char *out_obj                   = NULL;
+static bool assemble_it                = true;
+static bool link_it                    = true;
+static bool save_temps                 = false;
+static unsigned int optimization_level = 0;
 
-void __attribute__((__noreturn__))
+noreturn void
 usage (int status)
 {
   if (status != EXIT_SUCCESS)
-		emit_try_help ();
+    emit_try_help ();
   else
     {
       puts ("Usage: bfc [-sco:O:]\n"
-						"  --help                   Display this information and exit.\n"
-						"  -s                       Compile only, do not assemble or link.\n"
-						"  -c                       Compile and assemble, but do not link.\n"
-						"  -o <file>                Place the output into <file>.\n"
-						"  -On                      Level of optimization, default is 1.\n");
+            "  --help                   Display this information and exit.\n"
+            "  -s                       Compile only, do not assemble or link.\n"
+            "  -c                       Compile and assemble, but do not link.\n"
+            "  -o <file>                Place the output into <file>.\n"
+            "  -On                      Level of optimization, default is 1.\n");
     }
 
   exit (status);
@@ -140,106 +142,106 @@ static const struct option long_options[] =
 static void
 diagnose_leading_hyphen (int argc, char **argv)
 {
-	/* OPTIND is unreliable, so iterate through the arguments looking
-		 for a file name that looks like an option.  */
+  /* OPTIND is unreliable, so iterate through the arguments looking
+     for a file name that looks like an option.  */
 
-	struct stat st;
-	for (int i = 1; i < argc; ++i)
-		{
-			const char *arg = argv[i];
-			if (arg[0] == '-' && arg[1] != '\0' && lstat (arg, &st) == 0)
-				{
-					fprintf (stderr,
-									 _("Try '%s ./%s' to get a compile the file %s.\n"),
-									 argv[0],
-									 quotearg_n_style (1, shell_escape_quoting_style, arg),
-									 quoteaf (arg));
-				}
-		}
+  struct stat st;
+  for (int i = 1; i < argc; ++i)
+    {
+      const char *arg = argv[i];
+      if (arg[0] == '-' && arg[1] != '\0' && lstat (arg, &st) == 0)
+        {
+          fprintf (stderr,
+                   _("Try '%s ./%s' to get a compile the file %s.\n"),
+                   argv[0],
+                   quotearg_n_style (1, shell_escape_quoting_style, arg),
+                   quoteaf (arg));
+        }
+    }
 }
 
 void
 parseopt (int argc, char **argv)
 {
   parse_long_options (argc, argv, PROGRAM_NAME, PACKAGE_NAME, Version, usage, AUTHORS,
-											(const char *) NULL);
+                      (const char *) NULL);
 
   int opt = -1;
 
   while ((opt = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) != -1)
-	  {
-			switch (opt)
-				{
-				case 'o':
-					out_filename = optarg;
-					break;
+    {
+      switch (opt)
+        {
+        case 'o':
+          out_filename = optarg;
+          break;
 
-				case 'O':
-					optimization_level = xdectoumax (optarg, 0, UINT_MAX, "", _("invalid optimization level"), 0);
-					if (optimization_level > 2)
-						{
-							/* Maximum optimization level is two, if after '-O' costs 3
-								 or greater number, then replace it by 2.  */
-							optimization_level = 2;
-						}
-					break;
+        case 'O':
+          optimization_level = xdectoumax (optarg, 0, UINT_MAX, "", _("invalid optimization level"), 0);
+          if (optimization_level > 2)
+            {
+              /* Maximum optimization level is two, if after '-O' costs 3
+                 or greater number, then replace it by 2.  */
+              optimization_level = 2;
+            }
+          break;
 
-				case 'c':
-					assemble_it = true;
-					link_it = false;
-					break;
+        case 'c':
+          assemble_it = true;
+          link_it = false;
+          break;
 
-				case 's':
-					assemble_it = link_it = false;
-					break;
+        case 's':
+          assemble_it = link_it = false;
+          break;
 
-				case SAVE_TEMPS_OPTION:
-					save_temps = true;
-					break;
+        case SAVE_TEMPS_OPTION:
+          save_temps = true;
+          break;
 
-				default:
-					diagnose_leading_hyphen (argc, argv);
-					usage (EXIT_FAILURE);
-				}
-		}
+        default:
+          diagnose_leading_hyphen (argc, argv);
+          usage (EXIT_FAILURE);
+        }
+    }
 
-	char **operand_lim = argv + argc;
-	for (char **operandp = argv + optind; operandp < operand_lim; ++operandp)
-		{
-			char *file = *operandp;
-			if (strlen (file) > 3)
-				{
-					/* BrainFuck source code files must have '.bf' extension.  */
-					if (STRSUFFIX (file, ".bf") && in_filename == NULL)
-						{
-							/* 'in_filename' by default is NULL.  */
-							in_filename = file;
-						}
-					else if (in_filename != NULL)
-						{
-  						error (0, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
-						}
-				}
-		}
+  char **operand_lim = argv + argc;
+  for (char **operandp = argv + optind; operandp < operand_lim; ++operandp)
+    {
+      char *file = *operandp;
+      if (strlen (file) > 3)
+        {
+          /* BrainFuck source code files must have '.bf' extension.  */
+          if (STRSUFFIX (file, ".bf") && in_filename == NULL)
+            {
+              /* 'in_filename' by default is NULL.  */
+              in_filename = file;
+            }
+          else if (in_filename != NULL)
+            {
+              error (0, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
+            }
+        }
+    }
 
-	if (in_filename == NULL)
-		{
-			die (EXIT_FAILURE, 0, _("\
+  if (in_filename == NULL)
+    {
+      die (EXIT_FAILURE, 0, _("\
 \x1b[31mfatal error:\x1b[0m no input files\n\
 compilation terminated."));
-		}
+    }
 }
 
 int
 exec (char **arg)
 {
-  int status;
-	pid_t pid = -1;
+  int status = -1;
+  pid_t pid  = fork ();
 
-  if ((pid = fork ()) < 0)
+  if (pid < 0)
     {
       /* Fork error.  */
-      die (EXIT_FAILURE, errno, "%s", program_name);
+      die (EXIT_FAILURE, errno, "%s", arg[0]);
     }
   else if (pid == 0)
     {
@@ -258,28 +260,39 @@ exec (char **arg)
 int
 main (int argc, char **argv)
 {
-	/* Setting values of global variables.  */
-	initialize_main (&argc, &argv);
-	set_program_name (argv[0]);
-	setlocale (LC_ALL, "");
-	bindtextdomain (PACKAGE, LOCALEDIR);
-	textdomain (PACKAGE);
+  /* Setting values of global variables.  */
+  initialize_main (&argc, &argv);
+  set_program_name (argv[0]);
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
 
-	atexit (close_stdout);
+  atexit (close_stdout);
 
   parseopt (argc, argv);
 
-  bool out_filename_was_allocated = false;
-  if ((!assemble_it || !link_it) && !strcmp (out_filename, "a.out"))
-    {
-      char *cut_in_filename = cut_path (in_filename);
-      const size_t len = strlen (cut_in_filename) - 1;
-      char *buf = malloc (len); /* Allocate one less byte, '.bf' -> '.s' or '.o'.  */
+  char *cut_in_filename = cut_path (in_filename);
+  const size_t cut_in_filename_len = strlen (cut_in_filename);
 
-			/* Write in buf filename + '.' */
-      snprintf (buf, len, cut_in_filename);
-      buf[len - 1] = (assemble_it ? 'o' : 's');
-      buf[len] = '\0';
+  out_asm = malloc (cut_in_filename_len - 1);
+  out_obj = malloc (cut_in_filename_len - 1);
+  snprintf (out_asm, cut_in_filename_len - 1, "%s", cut_in_filename);
+  snprintf (out_obj, cut_in_filename_len - 1, "%s", cut_in_filename);
+  out_asm[cut_in_filename_len - 2] = 's';
+  out_asm[cut_in_filename_len - 1] = '\0';
+  out_obj[cut_in_filename_len - 2] = 'o';
+  out_obj[cut_in_filename_len - 1] = '\0';
+
+  bool out_filename_was_allocated = false;
+
+  if ((!assemble_it || !link_it) && !save_temps && !strcmp (out_filename, "a.out"))
+    {
+      char *buf = malloc (cut_in_filename_len);
+
+      /* Write in buf filename + '.' */
+      snprintf (buf, cut_in_filename_len, "%s", cut_in_filename);
+      buf[cut_in_filename_len - 1] = (assemble_it ? 'o' : 's');
+      buf[cut_in_filename_len - 0] = '\0';
 
       out_filename = buf;
       out_filename_was_allocated = true;
@@ -306,8 +319,7 @@ main (int argc, char **argv)
       exit (err);
     }
 
-  /* Write result file.  */
-  err = compile_to_file (out_filename, FILETYPE_ASSEMBLY, &tokenized_source);
+  err = translate_to_asm (out_asm, &tokenized_source);
   if (err != 0)
     {
       printf ("bfc: \x1b[31merror code:\x1b[0m %d\n", err);
@@ -316,14 +328,10 @@ main (int argc, char **argv)
   free (tokenized_source.tokens);
   free (source);
 
-  char *out_obj = malloc (strlen (out_filename) + 1); /* Reserve 1 byte for '\0'.  */
-  strcpy (out_obj, out_filename);
-  change_extension (out_obj, "o");
-
   if (assemble_it)
     {
       /* Run GAS to compile it if 'assemble' == true.  */
-      char *as[] = { "as", "--32", "-o", out_obj, out_filename, (char *) NULL };
+      char *as[] = { "as", "--32", "-o", out_obj, out_asm, (char *) NULL };
 
       exec (as);
 
@@ -332,23 +340,24 @@ main (int argc, char **argv)
           /* Run LD to link it if 'link' == true.  */
           char *ld[] = { "ld", "-m", "elf_i386", "-s", "-o", out_filename, out_obj, (char *) NULL };
 
-					exec (ld);
+          exec (ld);
         }
       if (!save_temps)
         {
-          /* If do not linking file and do not save temp files,
+          /* If do not compiling or linking file and do not save temp files,
              we delete file with assembler source code.  */
-          char *rm[] = { "rm", "-f", out_obj, (char *) NULL };
+          char *rm[] = { "rm", "-f", out_asm, out_obj, (char *) NULL };
 
           exec (rm);
         }
     }
 
-  free (out_obj);
   if (out_filename_was_allocated)
     {
       free (out_filename);
     }
+  free (out_obj);
+  free (out_asm);
 
   return err;
 }
