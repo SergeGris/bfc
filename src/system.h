@@ -21,28 +21,6 @@
 
 #include <sys/cdefs.h>
 
-#if ((defined(_WIN32) || defined(__WIN32__)) && !defined(__CYGWIN__)) && !defined(__windows__)
-# define __windows__ 1
-#endif
-
-/* By default, colon separates directories in a path.  */
-#if !defined(PATH_SEPARATOR)
-# if __windows__ || HAVE_DOS_BASED_FILE_SYSTEM
-#  define PATH_SEPARATOR ';'
-# else
-#  define PATH_SEPARATOR ':'
-# endif
-#endif
-
-/* These should be phased out in favor of IS_DIR_SEPARATOR, where possible.  */
-#if !defined(DIR_SEPARATOR)
-# if __windows__ || HAVE_DOS_BASED_FILE_SYSTEM
-#  define DIR_SEPARATOR '\\'
-# else
-#  define DIR_SEPARATOR '/'
-# endif
-#endif /* DIR_SEPARATOR */
-
 #if !defined(__attribute__)
 # if !defined(__GNUC__) || (__GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 8))
 #  define __attribute__(x) /* empty */
@@ -52,10 +30,6 @@
 #include <stddef.h>
 
 #include <alloca.h>
-
-#if HAVE_STDBOOL_H
-# include <stdbool.h>
-#endif
 
 /* Declare file status routines and bits.  */
 #if HAVE_SYS_STAT_H
@@ -97,7 +71,7 @@
 static inline void
 initialize_exit_failure (int status)
 {
-  if (status != EXIT_FAILURE && status != exit_failure)
+  if (status != EXIT_FAILURE)
     exit_failure = status;
 }
 
@@ -209,9 +183,6 @@ select_plural (uintmax_t n)
 #endif /* FALLTHROUGH */
 
 
-#include <stdnoreturn.h>
-
-
 /* __builtin_expect(CONDITION, EXPECTED_VALUE) evaluates to CONDITION, but notifies the compiler that
    the most likely value of CONDITION is EXPECTED_VALUE.  This feature was added at some point
    between 2.95 and 3.0.  Let's use 3.0 as the lower bound for now.  */
@@ -241,8 +212,11 @@ bad_cast (const char *s)
   return (char *) s;
 }
 
+void usage (int status) __attribute__ ((__noreturn__));
+
 /* How coreutils quotes filenames, to minimize use of outer quotes,
    but also provide better support for copy and paste when used.  */
+#include "quote.h"
 #include "quotearg.h"
 
 /* Use these to shell quote only when necessary,

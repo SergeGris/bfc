@@ -241,7 +241,8 @@ optimize (const Command *const tokens,
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
-  bool no_print_commands = false, no_input_commands = false;
+  bool have_print_commands = true,
+       have_input_commands = true;
 
   /* Level 0:
      Return code as is.
@@ -278,7 +279,7 @@ optimize (const Command *const tokens,
             {
               const Command current = input_tokens[i];
               if (current.token == T_LABEL
-                  && current.value == inactive_loop_index)
+               && current.value == inactive_loop_index)
                 {
                   inside_loop = true;
                 }
@@ -286,7 +287,7 @@ optimize (const Command *const tokens,
                 {
                   input_tokens[i].token = T_COMMENT;
                   if (current.token == T_JUMP
-                      && current.value == inactive_loop_index)
+                   && current.value == inactive_loop_index)
                     {
                       break;
                     }
@@ -295,7 +296,8 @@ optimize (const Command *const tokens,
         }
 
       /* Find input and print commands.  */
-      bool found_input = false, found_print = false;
+      bool found_input = false,
+           found_print = false;
       for (size_t i = 0; i < input_len; ++i)
         {
           const Command current = input_tokens[i];
@@ -315,8 +317,8 @@ optimize (const Command *const tokens,
             }
         }
 
-      no_print_commands = !found_print;
-      no_input_commands = !found_input;
+      have_print_commands = found_print;
+      have_input_commands = found_input;
     }
   /* TODO: Level 2:
      If no print or input commands, program has no effect
@@ -325,7 +327,7 @@ optimize (const Command *const tokens,
     {
       /* Error: Not implemented.  */
       err = 103;
-      if (no_print_commands && no_input_commands)
+      if (!have_print_commands && !have_input_commands)
         {
 
         }
@@ -356,8 +358,8 @@ optimize (const Command *const tokens,
     }
 
   out_result->length = index;
-  out_result->no_print_commands = no_print_commands;
-  out_result->no_input_commands = no_input_commands;
+  out_result->have_print_commands = have_print_commands;
+  out_result->have_input_commands = have_input_commands;
 
   free (input_tokens);
 

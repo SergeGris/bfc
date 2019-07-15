@@ -1,0 +1,10 @@
+/config.rpath
+/git-version-gen
+/gitlog-to-changelog
+/prefix-gnulib-mk
+/useless-if-before-free
+/vc-list-files
+/announce-gen
+/do-release-commit-and-tag
+/gendocs.sh
+/gnu-web-doc-update

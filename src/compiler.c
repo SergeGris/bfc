@@ -30,7 +30,8 @@ str_append (char **str, const char *format, ...)
   if (new_str == NULL)
     {
       /* Error: Out of memory.  */
-      return 201;
+      error (0, 0, "out of memory");
+      return -1;
     }
 
   if (*str != NULL)
@@ -55,13 +56,14 @@ write_file (const char *filename,
     {
       /* Error: Writing failed.  */
       error (0, errno, "%s", filename);
-      return 2103;
+      return -1;
     }
   size_t result = fwrite (source, sizeof (char), source_length, handle);
   if (result != source_length)
     {
       /* Error: Writing failed.  */
-      return 203;
+      error (0, errno, "%s", filename);
+      return -1;
     }
   fclose (handle);
   return 0;

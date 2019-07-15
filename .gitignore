@@ -1,7 +1,7 @@
-/build-aux
 *.I[12]
 *.o
-*/.deps/
+*/.deps
+/.deps
 *~
 .version
 /ABOUT-NLS
