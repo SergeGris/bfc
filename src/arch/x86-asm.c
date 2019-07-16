@@ -1,11 +1,15 @@
 
-#include "x86-asm.h"
+#include <config.h>
+
+#include "asm.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+
+#include "system.h"
 
 #include "compiler.h"
 
@@ -41,11 +45,34 @@ buffer:\n\
 .global     _start\n\n\
 ");
 
-  /* Subroutines for I/O */
+  /* Subroutines for I/O.  */
+  if (source->have_input_commands)
+    {
+      str_append (&output, "\
+getc:\n\
+    push    %%eax\n\
+    push    %%ebx\n\
+    push    %%ecx\n\
+    push    %%edx\n\
+    mov     $%d,%%eax\n\
+    mov     $%d,%%ebx\n\
+    mov     $buffer,%%ecx\n\
+    mov     $1,%%edx\n\
+    int     $0x80\n\
+    pop     %%edx\n\
+    pop     %%ecx\n\
+    pop     %%ebx\n\
+    pop     %%eax\n\
+    mov     (buffer),%%cl\n\
+    mov     %%cl,(%%eax)\n\
+    ret\n\
+\n\
+", syscall_sys_read, syscall_stdin);
+    }
   if (source->have_print_commands)
     {
       str_append (&output, "\
-print_char:\n\
+putc:\n\
     push    %%eax\n\
     push    %%ebx\n\
     push    %%ecx\n\
@@ -65,29 +92,6 @@ print_char:\n\
     ret\n\
 \n\
 ", syscall_sys_write, syscall_stdout);
-    }
-  if (source->have_input_commands)
-    {
-      str_append (&output, "\
-input_char:\n\
-    push    %%eax\n\
-    push    %%ebx\n\
-    push    %%ecx\n\
-    push    %%edx\n\
-    mov     $%d,%%eax\n\
-    mov     $%d,%%ebx\n\
-    mov     $buffer,%%ecx\n\
-    mov     $1,%%edx\n\
-    int     $0x80\n\
-    pop     %%edx\n\
-    pop     %%ecx\n\
-    pop     %%ebx\n\
-    pop     %%eax\n\
-    mov     (buffer),%%cl\n\
-    mov     %%cl,(%%eax)\n\
-    ret\n\
-\n\
-", syscall_sys_read, syscall_stdin);
     }
 
   /* Execution starts at this point.  */
@@ -173,12 +177,12 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    input_char\n\
+    call    getc\n\
 ");
             }
           break;
 
-        case T_PRINT:
+        case T_OUTPUT:
           if (!source->have_print_commands)
             {
               /* Error: Unexpected token.  */
@@ -187,7 +191,7 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    print_char\n\
+    call    putc\n\
 ");
             }
           break;

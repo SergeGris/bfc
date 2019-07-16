@@ -23,7 +23,7 @@ parse_token (const char symbol)
     case ',':
       return T_INPUT;
     case '.':
-      return T_PRINT;
+      return T_OUTPUT;
     default:
       return T_COMMENT;
     }
@@ -129,18 +129,14 @@ tokenize (const char *const source,
          Labels and jumps need a number.
          Read and print need nothing.  */
       if (current == T_INC)
-        {
-          command.value += parse_value (c_current);
-        }
+        command.value += parse_value (c_current);
       else if (current == T_POINTER_INC)
         {
           const int value = parse_value (c_current);
           command.value += value;
         }
       else if (current == T_LABEL)
-        {
-          command.value = opening_label_count++;
-        }
+        command.value = opening_label_count++;
       else if (current == T_JUMP)
         {
           ++closing_label_count;
@@ -157,9 +153,7 @@ tokenize (const char *const source,
           for (size_t kk = result_len - 1;; --kk)
             {
               if (result[kk].token == T_JUMP)
-                {
-                  ++open_labels_to_skip;
-                }
+                ++open_labels_to_skip;
               else if (result[kk].token == T_LABEL)
                 {
                   if (open_labels_to_skip-- == 0)
@@ -170,9 +164,7 @@ tokenize (const char *const source,
                 }
 
               if (kk == 0)
-                {
-                  break;
-                }
+                break;
             }
           if (correct_label < 0)
             {
@@ -203,10 +195,8 @@ tokenize (const char *const source,
   if (errorcode == 0)
     {
       if (opening_label_count != closing_label_count)
-        {
-          /* Error: Label mismatch.  */
-          errorcode = 102;
-        }
+        /* Error: Label mismatch.  */
+        errorcode = 102;
     }
   else
     {
@@ -234,10 +224,8 @@ optimize (const Command *const tokens,
 
   Command *input_tokens = malloc (tokens_len * sizeof (Command));
   if (input_tokens == NULL)
-    {
-      /* Error: Out of memory.  */
-      return 101;
-    }
+    /* Error: Out of memory.  */
+    return 101;
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
@@ -280,17 +268,13 @@ optimize (const Command *const tokens,
               const Command current = input_tokens[i];
               if (current.token == T_LABEL
                && current.value == inactive_loop_index)
-                {
-                  inside_loop = true;
-                }
+                inside_loop = true;
               if (inside_loop)
                 {
                   input_tokens[i].token = T_COMMENT;
                   if (current.token == T_JUMP
                    && current.value == inactive_loop_index)
-                    {
-                      break;
-                    }
+                    break;
                 }
             }
         }
@@ -303,23 +287,18 @@ optimize (const Command *const tokens,
           const Command current = input_tokens[i];
 
           if (current.token == T_INPUT)
-            {
-              found_input = true;
-            }
-          else if (current.token == T_PRINT)
-            {
-              found_print = true;
-            }
+            found_input = true;
+          else if (current.token == T_OUTPUT)
+            found_print = true;
 
           if (found_input && found_print)
-            {
-              break;
-            }
+            break;
         }
 
       have_print_commands = found_print;
       have_input_commands = found_input;
     }
+
   /* TODO: Level 2:
      If no print or input commands, program has no effect
      => Either remove everything or replace with [] if infinite loop.  */
@@ -352,9 +331,7 @@ optimize (const Command *const tokens,
   for (size_t i = 0; i < input_len; ++i)
     {
       if (input_tokens[i].token != T_COMMENT)
-        {
-          out_result->tokens[index++] = input_tokens[i];
-        }
+        out_result->tokens[index++] = input_tokens[i];
     }
 
   out_result->length = index;
@@ -378,9 +355,7 @@ tokenize_and_optimize (const char *const source,
   size_t tokenized_source_length = 0;
   int err = tokenize (source, &tokenized_source, &tokenized_source_length);
   if (err != 0)
-    {
-      return err;
-    }
+    return err;
 
   err = optimize (tokenized_source, tokenized_source_length, out_result, level);
   free (tokenized_source);

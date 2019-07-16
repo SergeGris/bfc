@@ -292,6 +292,9 @@
 /* Define to 1 when the gnulib module pthread_sigmask should be tested. */
 #undef GNULIB_TEST_PTHREAD_SIGMASK
 
+/* Define to 1 when the gnulib module pthread-thread should be tested. */
+#undef GNULIB_TEST_PTHREAD_THREAD
+
 /* Define to 1 when the gnulib module putenv should be tested. */
 #undef GNULIB_TEST_PUTENV
 
@@ -804,6 +807,9 @@
 /* Define to 1 if you have the `pthread_atfork' function. */
 #undef HAVE_PTHREAD_ATFORK
 
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
 /* Define if the <pthread.h> defines PTHREAD_MUTEX_RECURSIVE. */
 #undef HAVE_PTHREAD_MUTEX_RECURSIVE
 
@@ -816,6 +822,12 @@
 
 /* Define to 1 if the pthread_sigmask function can be used (despite bugs). */
 #undef HAVE_PTHREAD_SIGMASK
+
+/* Define to 1 if the system has the type `pthread_spinlock_t'. */
+#undef HAVE_PTHREAD_SPINLOCK_T
+
+/* Define to 1 if the system has the type `pthread_t'. */
+#undef HAVE_PTHREAD_T
 
 /* Define to 1 if you have the `raise' function. */
 #undef HAVE_RAISE
@@ -832,6 +844,9 @@
 
 /* Define to 1 if the system has the type `sa_family_t'. */
 #undef HAVE_SA_FAMILY_T
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
 
 /* Define to 1 if you have the <search.h> header file. */
 #undef HAVE_SEARCH_H
@@ -1196,6 +1211,9 @@
    type mode_t. */
 #undef PROMOTED_MODE_T
 
+/* Define if pthread_create is an inline function. */
+#undef PTHREAD_CREATE_IS_INLINE
+
 /* Define if the pthread_in_use() detection is hard. */
 #undef PTHREAD_IN_USE_DETECTION_HARD
 
@@ -1421,12 +1439,18 @@
 /* Define to 1 if you need to in order for 'stat' and other things to work. */
 #undef _POSIX_SOURCE
 
+/* For thread-safety on OSF/1, Solaris. */
+#undef _REENTRANT
+
 /* Define if you want <regex.h> to include <limits.h>, so that it consistently
    overrides <limits.h>'s RE_DUP_MAX. */
 #undef _REGEX_INCLUDE_LIMITS_H
 
 /* Define if you want regoff_t to be at least as wide POSIX requires. */
 #undef _REGEX_LARGE_OFFSETS
+
+/* For thread-safety on AIX, FreeBSD. */
+#undef _THREAD_SAFE
 
 /* For standard stat data types on VMS. */
 #undef _USE_STD_STAT

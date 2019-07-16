@@ -10,7 +10,7 @@
 
 #include "system.h"
 
-#include "arch/core.h"
+#include "arch/asm.h"
 
 int
 str_append (char **str, const char *format, ...)
@@ -35,9 +35,7 @@ str_append (char **str, const char *format, ...)
     }
 
   if (*str != NULL)
-    {
-      strcat (new_str, *str);
-    }
+    strcat (new_str, *str);
   strcat (new_str, formatted_str);
 
   free (*str);

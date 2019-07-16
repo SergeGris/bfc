@@ -2753,7 +2753,7 @@ EXTRA_libgnu_a_SOURCES += wcwidth.c
 ## begin gnulib module windows-mutex
 
 
-EXTRA_DIST += windows-mutex.c windows-mutex.h windows-spinlock.h
+EXTRA_DIST += windows-initguard.h windows-mutex.c windows-mutex.h
 
 EXTRA_libgnu_a_SOURCES += windows-mutex.c
 
@@ -2771,11 +2771,20 @@ EXTRA_libgnu_a_SOURCES += windows-once.c
 ## begin gnulib module windows-recmutex
 
 
-EXTRA_DIST += windows-recmutex.c windows-recmutex.h windows-spinlock.h
+EXTRA_DIST += windows-initguard.h windows-recmutex.c windows-recmutex.h
 
 EXTRA_libgnu_a_SOURCES += windows-recmutex.c
 
 ## end   gnulib module windows-recmutex
+
+## begin gnulib module windows-rwlock
+
+
+EXTRA_DIST += windows-initguard.h windows-rwlock.c windows-rwlock.h
+
+EXTRA_libgnu_a_SOURCES += windows-rwlock.c
+
+## end   gnulib module windows-rwlock
 
 ## begin gnulib module xalloc
 

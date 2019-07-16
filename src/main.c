@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <locale.h>
-#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -338,7 +337,7 @@ main (int argc, char **argv)
     {
       char *buf = malloc (cut_in_filename_len);
       if (buf == NULL)
-        die (EXIT_FAILURE, 0, "out of memory");
+        die (EXIT_FAILURE, 0, _("out of memory"));
 
       /* Write in buf filename + '.' */
       snprintf (buf, cut_in_filename_len, "%s", cut_in_filename);
@@ -356,7 +355,7 @@ main (int argc, char **argv)
   char *source = read_file (in_filename);
   if (source == NULL)
     {
-      error (0, 0, "fatal error: failed to read file %s", in_filename);
+      error (0, 0, _("fatal error: failed to read file %s"), in_filename);
       exit (EXIT_FAILURE);
     }
 
@@ -386,7 +385,7 @@ main (int argc, char **argv)
       err = exec (as);
       if (err != 0)
         {
-          error (0, 0, "error: as returned %d exit status", err);
+          error (0, 0, _("error: as returned %d exit status"), err);
         }
 
       if (link_it && err == 0)
@@ -397,7 +396,7 @@ main (int argc, char **argv)
           err = exec (ld);
           if (err != 0)
             {
-              error (0, 0, "error: ld returned %d exit status", err);
+              error (0, 0, _("error: ld returned %d exit status"), err);
             }
         }
       if (!save_temps)

@@ -171,7 +171,6 @@
 /windows-once.h
 /windows-recmutex.c
 /windows-recmutex.h
-/windows-spinlock.h
 /xalloc-die.c
 /xalloc-oversized.h
 /xalloc.h
@@ -214,7 +213,6 @@
 /ftello.c
 /lseek.c
 /open.c
-/ctype.in.h
 /fileblocks.c
 /stat-size.h
 /gettimeofday.c
@@ -239,3 +237,11 @@
 /unistd--.h
 /unistd-safer.h
 /unlocked-io.h
+/windows-initguard.h
+/windows-rwlock.c
+/windows-rwlock.h
+/ctype.in.h
+/dup-safer.c
+/fd-safer.c
+/fopen-safer.c
+/pipe-safer.c

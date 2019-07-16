@@ -22,7 +22,7 @@ typedef enum
   T_LABEL,
   T_JUMP,
   T_INPUT,
-  T_PRINT
+  T_OUTPUT
 } Token;
 
 /* Single Brainfuck command after parsing.  */
