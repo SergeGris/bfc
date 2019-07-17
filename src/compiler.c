@@ -10,7 +10,7 @@
 
 #include "system.h"
 
-#include "arch/asm.h"
+#include "arch.h"
 
 int
 str_append (char **str, const char *format, ...)

@@ -1,3 +1,18 @@
+/* main.c
+   Copyright (C) 2019 Sergey Sushilin
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -85,7 +100,7 @@ change_extension (char *filename, const char *new_extension)
   return filename;
 }
 
-char *
+static char *
 cut_path (char *str)
 {
   char *tmp = strchr (str, '\0');
@@ -100,8 +115,8 @@ static char *in_filename               = NULL;
 static char *out_filename              = "a.out";
 static char *out_asm                   = NULL;
 static char *out_obj                   = NULL;
-static bool assemble_it                = true;
-static bool link_it                    = true;
+static bool do_assemble                = true;
+static bool do_link                    = true;
 static bool save_temps                 = false;
 static unsigned int optimization_level = 0;
 
@@ -139,8 +154,8 @@ static const struct option long_options[] =
   {NULL, 0, NULL, '\0'}
 };
 
-/* Advise the user about invalid usages like "bfc -foo" if the file
-   "-foo" exists, assuming ARGC and ARGV are as with 'main'.  */
+/* Advise the user about invalid usages like "bfc -foo.bf" if the file
+   "-foo.bf" exists, assuming ARGC and ARGV are as with 'main'.  */
 static void
 diagnose_leading_hyphen (int argc, char **argv)
 {
@@ -151,7 +166,7 @@ diagnose_leading_hyphen (int argc, char **argv)
   for (int i = 1; i < argc; ++i)
     {
       const char *arg = argv[i];
-      if (arg[0] == '-' && arg[1] != '\0' && lstat (arg, &st) == 0)
+      if (arg[0] == '-' && strlen (arg) > 3 && lstat (arg, &st) == 0 && STRSUFFIX (arg, ".bf"))
         {
           fprintf (stderr,
                    _("Try '%s ./%s' to get a compile the file %s.\n"),
@@ -179,7 +194,7 @@ parseopt (int argc, char **argv)
           break;
 
         case 'O':
-          optimization_level = xdectoumax (optarg, 0, UINT8_MAX, "", _("invalid optimization level"), 0);
+          optimization_level = xdectoumax (optarg, 0, 3, "", _("invalid optimization level"), 0);
           if (optimization_level > 2)
             {
               /* Maximum optimization level is two, if after '-O' costs 3
@@ -189,12 +204,12 @@ parseopt (int argc, char **argv)
           break;
 
         case 'c':
-          assemble_it = true;
-          link_it = false;
+          do_assemble = true;
+          do_link = false;
           break;
 
         case 's':
-          assemble_it = link_it = false;
+          do_assemble = do_link = false;
           break;
 
         case SAVE_TEMPS_OPTION:
@@ -273,31 +288,6 @@ mktmp (const char *template, size_t suff_len)
 }
 
 int
-exec (char **arg)
-{
-  int status = -1;
-  pid_t pid  = vfork ();
-
-  if (pid < 0)
-    {
-      /* Fork error.  */
-      die (EXIT_FAILURE, errno, "%s", arg[0]);
-    }
-  else if (pid == 0)
-    {
-      /* Child process.  */
-      execvp (arg[0], arg);
-    }
-  else /* pid > 0 */
-    {
-      /* Parent process.  */
-      wait (&status);
-    }
-
-  return status;
-}
-
-int
 main (int argc, char **argv)
 {
   /* Setting values of global variables.  */
@@ -333,7 +323,7 @@ main (int argc, char **argv)
 
   bool out_filename_was_allocated = false;
 
-  if ((!assemble_it || !link_it) && !save_temps && !strcmp (out_filename, "a.out"))
+  if ((!do_assemble || !do_link) && !save_temps && !strcmp (out_filename, "a.out"))
     {
       char *buf = malloc (cut_in_filename_len);
       if (buf == NULL)
@@ -341,7 +331,7 @@ main (int argc, char **argv)
 
       /* Write in buf filename + '.' */
       snprintf (buf, cut_in_filename_len, "%s", cut_in_filename);
-      buf[cut_in_filename_len - 1] = (assemble_it ? 'o' : 's');
+      buf[cut_in_filename_len - 1] = (do_assemble ? 'o' : 's');
       buf[cut_in_filename_len - 0] = '\0';
 
       out_filename = buf;
@@ -377,45 +367,24 @@ main (int argc, char **argv)
   free (tokenized_source.tokens);
   free (source);
 
-  if (assemble_it && err == 0)
+  if (err == 0 && do_assemble)
     {
-      /* Run GAS to compile it if 'assemble' == true.  */
-      char *as[] = { "as", "--32", "-o", out_obj, out_asm, (char *) NULL };
+      err = compile_to_obj (out_asm, out_obj);
 
-      err = exec (as);
-      if (err != 0)
+      if (err == 0 && do_link)
         {
-          error (0, 0, _("error: as returned %d exit status"), err);
-        }
-
-      if (link_it && err == 0)
-        {
-          /* Run LD to link it if 'link' == true.  */
-          char *ld[] = { "ld", "-m", "elf_i386", "-s", "-o", out_filename, out_obj, (char *) NULL };
-
-          err = exec (ld);
-          if (err != 0)
-            {
-              error (0, 0, _("error: ld returned %d exit status"), err);
-            }
+          err = link_to_elf (out_obj, out_filename);
         }
       if (!save_temps)
         {
-          /* If do not save temp files, we delete object file and
-             file with assembler source code.  */
-          char *rm[] = { "rm", "-f", out_asm, (char *) NULL, (char *) NULL };
+          char *rm[] = { "rm", "-f", out_asm, (err == 0 && do_link) ? out_obj : (char *) NULL, (char *) NULL };
 
-          if (link_it)
-            rm[3] = out_obj;
-
-          err = exec (rm);
+          exec (rm);
         }
     }
 
   if (out_filename_was_allocated)
-    {
-      free (out_filename);
-    }
+    free (out_filename);
   free (out_obj);
   free (out_asm);
 
