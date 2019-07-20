@@ -52,6 +52,9 @@
 #include <string.h>
 #include <errno.h>
 
+#include <xalloc.h>
+#include <xstrndup.h>
+
 /* Some systems don't define this; POSIX mentions it but says it is
    obsolete.  gnulib defines it, but only on native Windows systems,
    and there only because MSVC 10 does.  */

@@ -28,8 +28,9 @@
 
 #include "system.h"
 
-#include "tokenizer.h"
+#include "arch.h"
 #include "compiler.h"
+#include "tokenizer.h"
 
 #include "die.h"
 #include "filenamecat.h"
@@ -130,10 +131,12 @@ usage (int status)
       puts ("\
 Usage: bfc [-sco:O:]\n\
   --help                   Display this information and exit.\n\
+  --version                Display compiler's version and exit.\n\
+  --save-temps             Do not delete temporary files.\n\
   -s                       Compile only, do not assemble or link.\n\
   -c                       Compile and assemble, but do not link.\n\
   -o <file>                Place the output into <file>.\n\
-  -On                      Level of optimization, default is 1.\n");
+  -On                      Level of optimization, default is 0.\n");
     }
 
   exit (status);
@@ -304,30 +307,43 @@ main (int argc, char **argv)
   char *cut_in_filename = cut_path (in_filename);
   const size_t cut_in_filename_len = strlen (cut_in_filename);
 
-  if (save_temps)
+  if (save_temps || !do_link)
     {
-      out_asm = malloc (cut_in_filename_len - 1);
-      out_obj = malloc (cut_in_filename_len - 1);
-      snprintf (out_asm, cut_in_filename_len - 1, "%s", cut_in_filename);
-      snprintf (out_obj, cut_in_filename_len - 1, "%s", cut_in_filename);
-      out_asm[cut_in_filename_len - 2] = 's';
-      out_asm[cut_in_filename_len - 1] = '\0';
-      out_obj[cut_in_filename_len - 2] = 'o';
-      out_obj[cut_in_filename_len - 1] = '\0';
+      if (!save_temps)
+        {
+          if (!do_assemble)
+            {
+              out_asm = xstrndup (cut_in_filename, cut_in_filename_len - 1);
+              change_extension (out_asm, "s");
+            }
+          else
+            {
+              out_asm = mktmp ("bfc-XXXXXXXXXXXX.s", 2);
+
+              out_obj = xstrndup (cut_in_filename, cut_in_filename_len - 1);
+              change_extension (out_obj, "o");
+            }
+        }
+      else
+        {
+          out_asm = xstrndup (cut_in_filename, cut_in_filename_len - 1);
+          out_obj = xstrndup (cut_in_filename, cut_in_filename_len - 1);
+
+          change_extension (cut_in_filename, "s");
+          change_extension (cut_in_filename, "o");
+        }
     }
   else
     {
-      out_obj = mktmp ("bfc-XXXXXXXXXXXX.o", 2);
       out_asm = mktmp ("bfc-XXXXXXXXXXXX.s", 2);
+      out_obj = mktmp ("bfc-XXXXXXXXXXXX.o", 2);
     }
 
   bool out_filename_was_allocated = false;
 
   if ((!do_assemble || !do_link) && !save_temps && !strcmp (out_filename, "a.out"))
     {
-      char *buf = malloc (cut_in_filename_len);
-      if (buf == NULL)
-        die (EXIT_FAILURE, 0, _("out of memory"));
+      char *buf = xmalloc (cut_in_filename_len);
 
       /* Write in buf filename + '.' */
       snprintf (buf, cut_in_filename_len, "%s", cut_in_filename);
@@ -375,9 +391,9 @@ main (int argc, char **argv)
         {
           err = link_to_elf (out_obj, out_filename);
         }
-      if (!save_temps)
+      if (err == 0 && !save_temps)
         {
-          char *rm[] = { "rm", "-f", out_asm, (err == 0 && do_link) ? out_obj : (char *) NULL, (char *) NULL };
+          char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
 
           exec (rm);
         }

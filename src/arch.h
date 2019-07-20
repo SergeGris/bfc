@@ -11,7 +11,8 @@ extern int tokens_to_asm (ProgramSource *const source,
                           char **final_output,
                           size_t *final_output_length);
 
-extern int compile_to_obj (char *, char *);
-extern int link_to_elf (char *, char *);
+extern int exec (char **arg);
+extern int compile_to_obj (char *asm_fn, char *obj_fn);
+extern int link_to_elf (char *obj_fn, char *elf_fn);
 
 #endif /* _ARCH_H */

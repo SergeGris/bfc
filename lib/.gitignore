@@ -245,3 +245,5 @@
 /fd-safer.c
 /fopen-safer.c
 /pipe-safer.c
+/xstrndup.c
+/xstrndup.h

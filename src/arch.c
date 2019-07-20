@@ -1,6 +1,4 @@
 
-int exec (char **arg);
-
 #if defined(__x86_64__) || defined(_AMD64_) || defined(__i386__)
 # include "arch/x86.c"
 #elif defined(__arm__)

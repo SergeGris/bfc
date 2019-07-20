@@ -102,6 +102,7 @@
 #  version-etc-fsf \
 #  xalloc \
 #  xdectoint \
+#  xstrndup \
 #  year2038 \
 #  yesno
 
@@ -2822,6 +2823,12 @@ EXTRA_libgnu_a_SOURCES += xdectoint.c
 libgnu_a_SOURCES += xstriconv.h xstriconv.c
 
 ## end   gnulib module xstriconv
+
+## begin gnulib module xstrndup
+
+libgnu_a_SOURCES += xstrndup.c xstrndup.h
+
+## end   gnulib module xstrndup
 
 ## begin gnulib module xstrtoimax
 

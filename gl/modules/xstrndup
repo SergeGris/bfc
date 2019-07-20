@@ -1,0 +1,23 @@
+Description:
+Duplicate string, returning a nonnull identical malloc'd string.
+
+Files:
+lib/xstrndup.c
+lib/xstrndup.h
+
+Depends-on:
+xalloc
+
+configure.ac:
+
+Makefile.am:
+lib_SOURCES += xstrndup.c xstrndup.h
+
+Include:
+"xstrndup.h"
+
+License:
+GPL
+
+Maintainer:
+all

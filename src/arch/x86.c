@@ -197,6 +197,7 @@ label_%d_end:\n\
             }
           break;
 
+        case T_COMMENT:
         default:
           break;
         }

@@ -107,6 +107,7 @@
 #  version-etc-fsf \
 #  xalloc \
 #  xdectoint \
+#  xstrndup \
 #  year2038 \
 #  yesno
 
@@ -179,6 +180,7 @@ gl_MODULES([
   version-etc-fsf
   xalloc
   xdectoint
+  xstrndup
   year2038
   yesno
 ])
