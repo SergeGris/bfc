@@ -1,9 +1,13 @@
 
+#include <config.h>
+
 #include "tokenizer.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "system.h"
 
 Token
 parse_token (const char symbol)
@@ -49,20 +53,11 @@ char *
 strip_comments (const char *const source)
 {
   const size_t size = strlen (source);
-  char *result = malloc ((size + 1) * sizeof (char));
-  if (result == NULL)
-    {
-      /* Error: Out of memory */
-      return NULL;
-    }
+  char *result = xmalloc (size + 1);
   int index = 0;
   for (size_t i = 0; i < size; ++i)
-    {
-      if (parse_token (source[i]) != T_COMMENT)
-        {
-          result[index++] = source[i];
-        }
-    }
+    if (parse_token (source[i]) != T_COMMENT)
+      result[index++] = source[i];
   result[index++] = 0;
   return result;
 }
@@ -73,12 +68,7 @@ append_to_array (const Command cmd,
                  size_t *out_result_len)
 {
   size_t new_size = *out_result_len + 1;
-  Command *tmp = realloc (*out_result, new_size * sizeof (Command));
-  if (tmp == NULL)
-    {
-      /* Error: Out of memory.  */
-      return 1;
-    }
+  Command *tmp = xrealloc (*out_result, new_size * sizeof (Command));
   tmp[new_size - 1] = cmd;
 
   *out_result = tmp;
@@ -104,11 +94,6 @@ tokenize (const char *const source,
 
   /* Strip comments from the source.  */
   char *cleaned_source = strip_comments (source);
-  if (cleaned_source == NULL)
-    {
-      /* Error: Out of memory.  */
-      return 101;
-    }
 
   /* Command that is currently being constructed.  */
   Command command = { T_COMMENT, 0 };
@@ -222,10 +207,7 @@ optimize (const Command *const tokens,
 {
   int err = 0;
 
-  Command *input_tokens = malloc (tokens_len * sizeof (Command));
-  if (input_tokens == NULL)
-    /* Error: Out of memory.  */
-    return 101;
+  Command *input_tokens = xmalloc (tokens_len * sizeof (Command));
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
@@ -319,13 +301,7 @@ optimize (const Command *const tokens,
     }
 
   /* Compact result by stripping out comments.  */
-  out_result->tokens = malloc (input_len * sizeof (Command));
-  if (out_result->tokens == NULL)
-    {
-      /* Error: Out of memory.  */
-      free (input_tokens);
-      return 101;
-    }
+  out_result->tokens = xmalloc (input_len * sizeof (Command));
 
   unsigned int index = 0;
   for (size_t i = 0; i < input_len; ++i)

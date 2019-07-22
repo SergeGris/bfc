@@ -56,18 +56,15 @@ read_file (const char *filename)
       fseek (handle, 0L, SEEK_END);
       length = ftell (handle);
       fseek (handle, 0L, SEEK_SET);
-      buffer = malloc ((length + 1) * sizeof (char));
-      if (buffer != NULL)
+      buffer = xmalloc (length + 1);
+      size_t result = fread (buffer, sizeof (char), length, handle);
+      if (result != length)
         {
-          size_t result = fread (buffer, sizeof (char), length, handle);
-          if (result != length)
-            {
-              /* Error: Reading failed */
-              free (buffer);
-              return NULL;
-            }
-          buffer[length] = '\0';
+          /* Error: Reading failed */
+          free (buffer);
+          return NULL;
         }
+      buffer[length] = '\0';
       fclose (handle);
     }
   return buffer;
@@ -232,21 +229,15 @@ parseopt (int argc, char **argv)
       if (strlen (file) > 3)
         {
           if (STRSUFFIX (file, ".bf") && in_filename == NULL)
-            {
-              /* 'in_filename' by default is NULL.  */
-              in_filename = file;
-            }
+            /* 'in_filename' by default is NULL.  */
+            in_filename = file;
           else if (in_filename != NULL)
-            {
-              error (0, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
-            }
+            error (0, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
         }
     }
 
   if (in_filename == NULL)
-    {
-      die (EXIT_FAILURE, 0, _("fatal error: no input files."));
-    }
+    die (EXIT_FAILURE, 0, _("fatal error: no input files."));
 }
 
 static size_t
@@ -282,10 +273,8 @@ mktmp (const char *template, size_t suff_len)
   int fd = mktemp_len (tmpfile, suff_len, x_len, true);
 
   if (fd < 0 || close (fd) != 0)
-    {
-      error (0, errno, _("failed to create file via template %s"),
-             quote (template));
-    }
+    error (0, errno, _("failed to create file via template %s"),
+           quote (template));
 
   return tmpfile;
 }
@@ -360,10 +349,7 @@ main (int argc, char **argv)
   /* Open file.  */
   char *source = read_file (in_filename);
   if (source == NULL)
-    {
-      error (0, 0, _("fatal error: failed to read file %s"), in_filename);
-      exit (EXIT_FAILURE);
-    }
+    die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), in_filename);
 
   /* Interpret symbols.  */
   err = tokenize_and_optimize (source, &tokenized_source, optimization_level);
@@ -376,9 +362,7 @@ main (int argc, char **argv)
 
   err = translate_to_asm (out_asm, &tokenized_source);
   if (err != 0)
-    {
-      error (0, 0, _("error code: %d"), err);
-    }
+    error (0, 0, _("error code: %d"), err);
 
   free (tokenized_source.tokens);
   free (source);
@@ -388,15 +372,13 @@ main (int argc, char **argv)
       err = compile_to_obj (out_asm, out_obj);
 
       if (err == 0 && do_link)
-        {
-          err = link_to_elf (out_obj, out_filename);
-        }
-      if (err == 0 && !save_temps)
-        {
-          char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
+        err = link_to_elf (out_obj, out_filename);
+    }
 
-          exec (rm);
-        }
+  if (!save_temps || err != 0)
+    {
+      char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
+      exec (rm);
     }
 
   if (out_filename_was_allocated)
