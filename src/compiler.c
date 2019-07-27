@@ -41,7 +41,7 @@ str_append (char **str, const char *format, ...)
 
   vsprintf (formatted_str, format, arg_ptr);
 
-  const size_t old_length = (*str == NULL ? 0 : strlen (*str));
+  const size_t old_length = (*str == NULL || **str == '\0' ? 0 : strlen (*str));
   char *new_str = xcalloc (old_length + strlen (formatted_str) + 1, sizeof (char));
 
   if (*str != NULL)

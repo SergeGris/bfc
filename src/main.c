@@ -187,54 +187,62 @@ parseopt (int argc, char **argv)
   int optc = -1;
 
   while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) != -1)
-    {
-      switch (optc)
-        {
-        case 'o':
-          out_filename = optarg;
-          break;
+    switch (optc)
+      {
+      case 'o':
+        out_filename = optarg;
+        break;
 
-        case 'O':
-          optimization_level = xdectoumax (optarg, 0, 9, "", _("invalid optimization level"), 0);
-          /*          if (optimization_level > 1)
-            {
-              /* Maximum optimization level is two, if after '-O' costs 2
-                 or greater number, then replace it by 1.  * /
-              optimization_level = 1;
-              }*/
-          break;
+      case 'O':
+        if (*optarg == '\0' || *(optarg + 1) != '\0' || (*optarg < '0' && *optarg > '9'))
+          error (0, 0, _("invalid optimization level %s"), optarg);
+        optimization_level = *optarg - '0';
+        if (optimization_level > 1)
+          {
+            /* Maximum optimization level is two, if after '-O' costs 2
+               or greater number, then replace it by 1.  */
+            optimization_level = 1;
+          }
+        break;
 
-        case 'c':
-          do_assemble = true;
-          do_link = false;
-          break;
+      case 'c':
+        do_assemble = true;
+        do_link = false;
+        break;
 
-        case 's':
-          do_assemble = do_link = false;
-          break;
+      case 's':
+        do_assemble = do_link = false;
+        break;
 
-        case SAVE_TEMPS_OPTION:
-          save_temps = true;
-          break;
+      case SAVE_TEMPS_OPTION:
+        save_temps = true;
+        break;
 
-        default:
-          diagnose_leading_hyphen (argc, argv);
-          usage (EXIT_FAILURE);
-        }
-    }
+      default:
+        diagnose_leading_hyphen (argc, argv);
+        usage (EXIT_FAILURE);
+      }
 
+  errno = 0;
   char **operand_lim = argv + argc;
   for (char **operandp = argv + optind; operandp < operand_lim; ++operandp)
     {
       char *file = *operandp;
+      struct stat st;
       if (strlen (file) > 3)
         {
-          if (STRSUFFIX (file, ".bf") && in_filename == NULL)
+          if (STRSUFFIX (file, ".bf") && in_filename == NULL && stat (file, &st) == 0)
             /* 'in_filename' by default is NULL.  */
             in_filename = file;
+          else if (errno != 0)
+            die (EXIT_TROUBLE, errno, "%s", quoteaf (file));
+          else if (in_filename == NULL)
+            die (EXIT_TROUBLE, 0, _("BrainFuck source code file must have a '.bf' extension"));
           else if (in_filename != NULL)
-            error (0, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
+            die (EXIT_TROUBLE, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
         }
+      else
+        die (EXIT_TROUBLE, 0, _("BrainFuck source code file must have a '.bf' extension"));
     }
 
   if (in_filename == NULL)
@@ -245,8 +253,11 @@ static size_t
 count_consecutive_X_s (const char *s, size_t len)
 {
   size_t n = 0;
-  for (; len != 0 && s[len - 1] == 'X'; --len)
-    ++n;
+  while (len != 0 && s[len - 1] == 'X')
+    {
+      ++n;
+      --len;
+    }
   return n;
 }
 static int

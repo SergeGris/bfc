@@ -70,11 +70,11 @@ strip_comments (const char *const source)
 {
   const size_t size = strlen (source);
   char *result = xmalloc (size + 1);
-  size_t index = 0;
+  size_t j = 0;
   for (size_t i = 0; i < size; ++i)
     if (parse_token (source[i]) != T_COMMENT)
-      result[index++] = source[i];
-  result[index++] = '\0';
+      result[j++] = source[i];
+  result[j] = '\0';
   return result;
 }
 
@@ -228,7 +228,7 @@ optimize (const Command *const tokens,
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
   bool have_putchar_commands = true,
-       have_getchar_commands  = true;
+       have_getchar_commands = true;
 
   /* Level 0:
      Return code as is.
@@ -292,7 +292,7 @@ optimize (const Command *const tokens,
         }
 
       have_putchar_commands = found_output;
-      have_getchar_commands  = found_input;
+      have_getchar_commands = found_input;
     }
 
   /* TODO: Level 2:
@@ -300,15 +300,9 @@ optimize (const Command *const tokens,
      => Either remove everything or replace with [] if infinite loop.  */
   if (level >= 2)
     {
-      for (size_t i = 0; i < input_len; ++i)
-        {
-          const Command current = input_tokens[i];
-          if (current.token == T_PUTCHAR && current.value == 0)
-            input_tokens[i].token = T_COMMENT;
-        }
-
       /* Error: Not implemented.  */
-      //      err = 103;
+      err = 103;
+
       if (!have_putchar_commands && !have_getchar_commands)
         {
 
@@ -329,16 +323,16 @@ optimize (const Command *const tokens,
   /* Compact result by stripping out comments.  */
   out_result->tokens = xmalloc (input_len_without_comments * sizeof (Command));
 
-  size_t index = 0;
+  size_t length = 0;
   for (size_t i = 0; i < input_len; ++i)
     {
       if (input_tokens[i].token != T_COMMENT)
-        out_result->tokens[index++] = input_tokens[i];
+        out_result->tokens[length++] = input_tokens[i];
     }
 
-  out_result->length = index;
+  out_result->length = length;
   out_result->have_putchar_commands = have_putchar_commands;
-  out_result->have_getchar_commands  = have_getchar_commands;
+  out_result->have_getchar_commands = have_getchar_commands;
 
   free (input_tokens);
 
