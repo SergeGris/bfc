@@ -196,12 +196,12 @@ parseopt (int argc, char **argv)
 
         case 'O':
           optimization_level = xdectoumax (optarg, 0, 9, "", _("invalid optimization level"), 0);
-          if (optimization_level > 1)
+          /*          if (optimization_level > 1)
             {
               /* Maximum optimization level is two, if after '-O' costs 2
-                 or greater number, then replace it by 1.  */
+                 or greater number, then replace it by 1.  * /
               optimization_level = 1;
-            }
+              }*/
           break;
 
         case 'c':

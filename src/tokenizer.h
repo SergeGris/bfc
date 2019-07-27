@@ -33,12 +33,12 @@
 typedef enum
 {
   T_COMMENT,
-  T_INC,
-  T_POINTER_INC,
+  T_INCDEC,
+  T_POINTER_INCDEC,
   T_LABEL,
   T_JUMP,
-  T_INPUT,
-  T_OUTPUT
+  T_GETCHAR,
+  T_PUTCHAR
 } Token;
 
 /* Single Brainfuck command after parsing.  */
@@ -53,8 +53,8 @@ typedef struct
 {
   Command *tokens;
   size_t length;
-  bool have_print_commands;
-  bool have_input_commands;
+  bool have_getchar_commands;
+  bool have_putchar_commands;
 } ProgramSource;
 
 extern Token parse_token (const char symbol);

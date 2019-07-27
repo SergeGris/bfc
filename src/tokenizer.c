@@ -32,18 +32,18 @@ parse_token (char symbol)
     {
     case '+':
     case '-':
-      return T_INC;
+      return T_INCDEC;
     case '<':
     case '>':
-      return T_POINTER_INC;
+      return T_POINTER_INCDEC;
     case '[':
       return T_LABEL;
     case ']':
       return T_JUMP;
     case ',':
-      return T_INPUT;
+      return T_GETCHAR;
     case '.':
-      return T_OUTPUT;
+      return T_PUTCHAR;
     default:
       return T_COMMENT;
     }
@@ -70,11 +70,11 @@ strip_comments (const char *const source)
 {
   const size_t size = strlen (source);
   char *result = xmalloc (size + 1);
-  int index = 0;
+  size_t index = 0;
   for (size_t i = 0; i < size; ++i)
     if (parse_token (source[i]) != T_COMMENT)
       result[index++] = source[i];
-  result[index++] = 0;
+  result[index++] = '\0';
   return result;
 }
 
@@ -129,9 +129,9 @@ tokenize (const char *const source,
          Data increment and pointer increment are added to previous symbol.
          Labels and jumps need a number.
          Read and print need nothing.  */
-      if (current == T_INC)
+      if (current == T_INCDEC)
         command.value += parse_value (c_current);
-      else if (current == T_POINTER_INC)
+      else if (current == T_POINTER_INCDEC)
         {
           const int value = parse_value (c_current);
           command.value += value;
@@ -177,7 +177,7 @@ tokenize (const char *const source,
         }
 
       /* Expecting new command: Push previous command to the final result and make a new one.  */
-      if (current != next || (current != T_INC && current != T_POINTER_INC))
+      if (current != next || (current != T_INCDEC && current != T_POINTER_INCDEC))
         {
           if (command.token != T_COMMENT)
             {
@@ -227,16 +227,16 @@ optimize (const Command *const tokens,
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
-  bool have_print_commands = true,
-       have_input_commands = true;
+  bool have_putchar_commands = true,
+       have_getchar_commands  = true;
 
   /* Level 0:
      Return code as is.
 
      Level 1:
      Remove inactive loops (no +-, before the loop start)
-     Check if there are no print commands
-     Check if there are no input commands.  */
+     Check if there are no output commands
+     Check if there are no input  commands.  */
   if (level >= 1)
     {
       /* Remove inactive loops.  */
@@ -248,7 +248,7 @@ optimize (const Command *const tokens,
           for (size_t i = 0; i < input_len; ++i)
             {
               const Command current = input_tokens[i];
-              if (current.token == T_INC || current.token == T_INPUT)
+              if (current.token == T_INCDEC || current.token == T_GETCHAR)
                 {
                   /* Not inactive */
                   finished = true;
@@ -264,37 +264,35 @@ optimize (const Command *const tokens,
           for (size_t i = 0; i < input_len; ++i)
             {
               const Command current = input_tokens[i];
-              if (current.token == T_LABEL
-               && current.value == inactive_loop_index)
+              if (current.token == T_LABEL && current.value == inactive_loop_index)
                 inside_loop = true;
               if (inside_loop)
                 {
                   input_tokens[i].token = T_COMMENT;
-                  if (current.token == T_JUMP
-                   && current.value == inactive_loop_index)
+                  if (current.token == T_JUMP && current.value == inactive_loop_index)
                     break;
                 }
             }
         }
 
       /* Find input and print commands.  */
-      bool found_input = false,
-           found_print = false;
+      bool found_input  = false,
+           found_output = false;
       for (size_t i = 0; i < input_len; ++i)
         {
           const Command current = input_tokens[i];
 
-          if (current.token == T_INPUT)
+          if (current.token == T_GETCHAR)
             found_input = true;
-          else if (current.token == T_OUTPUT)
-            found_print = true;
+          else if (current.token == T_PUTCHAR)
+            found_output = true;
 
-          if (found_input && found_print)
+          if (found_input && found_output)
             break;
         }
 
-      have_print_commands = found_print;
-      have_input_commands = found_input;
+      have_putchar_commands = found_output;
+      have_getchar_commands  = found_input;
     }
 
   /* TODO: Level 2:
@@ -302,9 +300,16 @@ optimize (const Command *const tokens,
      => Either remove everything or replace with [] if infinite loop.  */
   if (level >= 2)
     {
+      for (size_t i = 0; i < input_len; ++i)
+        {
+          const Command current = input_tokens[i];
+          if (current.token == T_PUTCHAR && current.value == 0)
+            input_tokens[i].token = T_COMMENT;
+        }
+
       /* Error: Not implemented.  */
-      err = 103;
-      if (!have_print_commands && !have_input_commands)
+      //      err = 103;
+      if (!have_putchar_commands && !have_getchar_commands)
         {
 
         }
@@ -316,10 +321,15 @@ optimize (const Command *const tokens,
       return err;
     }
 
-  /* Compact result by stripping out comments.  */
-  out_result->tokens = xmalloc (input_len * sizeof (Command));
+  size_t input_len_without_comments = input_len;
+  for (size_t i = 0; i < input_len; ++i)
+    if (input_tokens[i].token == T_COMMENT)
+      --input_len_without_comments;
 
-  unsigned int index = 0;
+  /* Compact result by stripping out comments.  */
+  out_result->tokens = xmalloc (input_len_without_comments * sizeof (Command));
+
+  size_t index = 0;
   for (size_t i = 0; i < input_len; ++i)
     {
       if (input_tokens[i].token != T_COMMENT)
@@ -327,8 +337,8 @@ optimize (const Command *const tokens,
     }
 
   out_result->length = index;
-  out_result->have_print_commands = have_print_commands;
-  out_result->have_input_commands = have_input_commands;
+  out_result->have_putchar_commands = have_putchar_commands;
+  out_result->have_getchar_commands  = have_getchar_commands;
 
   free (input_tokens);
 

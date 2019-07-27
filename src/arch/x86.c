@@ -63,10 +63,10 @@ buffer:\n\
 ");
 
   /* Subroutines for I/O.  */
-  if (source->have_input_commands)
+  if (source->have_getchar_commands)
     {
       str_append (&output, "\
-getc:\n\
+getchar:\n\
     push    %%eax\n\
     push    %%ebx\n\
     push    %%ecx\n\
@@ -86,10 +86,10 @@ getc:\n\
 \n\
 ", syscall_sys_read, syscall_stdin);
     }
-  if (source->have_print_commands)
+  if (source->have_putchar_commands)
     {
       str_append (&output, "\
-putc:\n\
+putchar:\n\
     push    %%eax\n\
     push    %%ebx\n\
     push    %%ecx\n\
@@ -124,7 +124,7 @@ _start:\n\
       const Command current = source->tokens[i];
       switch (current.token)
         {
-        case T_INC:
+        case T_INCDEC:
           if (current.value > 0)
             {
               str_append (&output, "\
@@ -146,7 +146,7 @@ _start:\n\
             }
           break;
 
-        case T_POINTER_INC:
+        case T_POINTER_INCDEC:
           if (current.value > 0)
             {
               str_append (&output, "\
@@ -185,8 +185,8 @@ label_%d_end:\n\
 ", current.value, current.value);
           break;
 
-        case T_INPUT:
-          if (!source->have_input_commands)
+        case T_GETCHAR:
+          if (!source->have_getchar_commands)
             {
               /* Error: Unexpected token.  */
               errorcode = 202;
@@ -194,13 +194,13 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    getc\n\
+    call    getchar\n\
 ");
             }
           break;
 
-        case T_OUTPUT:
-          if (!source->have_print_commands)
+        case T_PUTCHAR:
+          if (!source->have_putchar_commands)
             {
               /* Error: Unexpected token.  */
               errorcode = 202;
@@ -208,7 +208,7 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    putc\n\
+    call    putchar\n\
 ");
             }
           break;
