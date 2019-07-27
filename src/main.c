@@ -1,18 +1,19 @@
-/* main.c
-   Copyright (C) 2019 Sergey Sushilin
+/*  main.c
+    Copyright (C) 2019 Sergey Sushilin
+    This file is part of the BrainFuck Compiler
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+    BrainFuck Compiler is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -194,12 +195,12 @@ parseopt (int argc, char **argv)
           break;
 
         case 'O':
-          optimization_level = xdectoumax (optarg, 0, 3, "", _("invalid optimization level"), 0);
-          if (optimization_level > 2)
+          optimization_level = xdectoumax (optarg, 0, 9, "", _("invalid optimization level"), 0);
+          if (optimization_level > 1)
             {
-              /* Maximum optimization level is two, if after '-O' costs 3
-                 or greater number, then replace it by 2.  */
-              optimization_level = 2;
+              /* Maximum optimization level is two, if after '-O' costs 2
+                 or greater number, then replace it by 1.  */
+              optimization_level = 1;
             }
           break;
 

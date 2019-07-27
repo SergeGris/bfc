@@ -18,7 +18,6 @@
 
 AM_CFLAGS = -pipe $(WERROR_CFLAGS)
 
-EXTRA_PROGRAMS = bfc
 bin_PROGRAMS = src/bfc
 
 noinst_HEADERS = \
