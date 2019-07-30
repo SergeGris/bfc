@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "system.h"
@@ -50,7 +51,7 @@ exec (char **arg)
 
   return status;
 }
-
+/*
 #if defined(__amd64__) || defined(__x86_64__) || defined(_AMD64_)
 # include "arch/x86_64.c"
 #elif defined(__i386__)
@@ -62,6 +63,21 @@ exec (char **arg)
 #elif defined(__m68k__)
 # include "arch/m68k.c"
 #endif
+*/
+#include "arch/x86.c"
+
+verify (sizeof (getchar_body)               <= 512);
+verify (sizeof (putchar_body)               <= 512);
+verify (sizeof (start_begin_and_init_array) <= 512);
+verify (sizeof (increment_current_value)    <= 512);
+verify (sizeof (decrement_current_value)    <= 512);
+verify (sizeof (increment_current_pointer)  <= 512);
+verify (sizeof (decrement_current_pointer)  <= 512);
+verify (sizeof (label_begin)                <= 512);
+verify (sizeof (label_end)                  <= 512);
+verify (sizeof (call_getchar)               <= 512);
+verify (sizeof (call_putchar )              <= 512);
+verify (sizeof (start_end)                  <= 512);
 
 int
 tokens_to_asm (ProgramSource *const source,
@@ -77,9 +93,9 @@ tokens_to_asm (ProgramSource *const source,
 
   /* Subroutines for I/O.  */
   if (source->have_getchar_commands)
-    str_append (&output, getchar_body, syscall_sys_read, syscall_stdin);
+    str_append (&output, getchar_body);
   if (source->have_putchar_commands)
-    str_append (&output, putchar_body, syscall_sys_write, syscall_stdout);
+    str_append (&output, putchar_body);
 
   /* Execution starts at this point.  */
   str_append (&output, start_begin_and_init_array);
@@ -93,11 +109,14 @@ tokens_to_asm (ProgramSource *const source,
         {
         case T_INCDEC:
           if (current.value > 0)
-            str_append (&output, increment_current_value, +current.value & CELL_MAX);
+            str_append (&output, increment_current_value, +current.value & 0xFF);
           else if (current.value < 0)
-            str_append (&output, decrement_current_value, -current.value & CELL_MAX);
+            str_append (&output, decrement_current_value, -current.value & 0xFF);
           else
-            /* Command has no effect.  */;
+            {
+              /* Command has no effect.  */
+              ;
+            }
           break;
 
         case T_POINTER_INCDEC:
@@ -106,7 +125,10 @@ tokens_to_asm (ProgramSource *const source,
           else if (current.value < 0)
             str_append (&output, decrement_current_pointer, -current.value);
           else
-            /* Command has no effect.  */;
+            {
+              /* Command has no effect.  */
+              ;
+            }
           break;
 
         case T_LABEL:
@@ -140,7 +162,7 @@ tokens_to_asm (ProgramSource *const source,
 
   /* Write quit commands.  */
   if (errorcode == 0)
-    str_append (&output, start_end, syscall_sys_exit);
+    str_append (&output, start_end);
   else
     {
       free (output);

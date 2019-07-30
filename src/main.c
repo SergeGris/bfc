@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <locale.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -33,11 +34,14 @@
 #include "compiler.h"
 #include "tokenizer.h"
 
+#include "configmake.h"
 #include "die.h"
 #include "filenamecat.h"
 #include "long-options.h"
 #include "tempname.h"
+#include "xalloc.h"
 #include "xdectoint.h"
+#include "xstrndup.h"
 
 /* The official name of this program (e.g., no 'g' prefix).  */
 #define PROGRAM_NAME "bfc"
@@ -48,33 +52,42 @@
 static char *
 read_file (const char *filename)
 {
-  char *buffer = NULL;
-  size_t length = 0;
-  FILE *handle = fopen (filename, "r");
+  char *buf = NULL;
+  long  len = 0L;
+  FILE *fp  = fopen (filename, "r");
 
-  if (handle != NULL)
+  if (unlikely (fp == NULL
+             || fseek (fp, 0L, SEEK_END) < 0
+             || (len = ftell (fp))       < 0
+             || fseek (fp, 0L, SEEK_SET) < 0))
     {
-      fseek (handle, 0L, SEEK_END);
-      length = ftell (handle);
-      fseek (handle, 0L, SEEK_SET);
-      buffer = xmalloc (length + 1);
-      size_t result = fread (buffer, sizeof (char), length, handle);
-      if (result != length)
-        {
-          /* Error: Reading failed */
-          free (buffer);
-          return NULL;
-        }
-      buffer[length] = '\0';
-      fclose (handle);
+      error (0, errno, "%s", quotef (filename));
+      return NULL;
     }
-  return buffer;
+
+  buf = xmalloc (len + 1);
+  size_t res = fread (buf, sizeof (char), len, fp);
+  if (res != len)
+    {
+      /* Error: Reading failed */
+      error (0, errno, "%s", quotef (filename));
+      free (buf);
+      return NULL;
+    }
+  buf[len] = '\0';
+  if (unlikely (fclose (fp) != 0))
+    {
+      error (0, errno, "%s", quotef (filename));
+      free (buf);
+      return NULL;
+    }
+  return buf;
 }
 
 static const char *
 change_extension (char *filename, const char *new_extension)
 {
-  if (filename == NULL || *filename == '\0')
+  if (unlikely (filename == NULL || *filename == '\0'))
     return "";
 
   size_t len = strlen (filename);
@@ -126,15 +139,16 @@ usage (int status)
     emit_try_help ();
   else
     {
-      puts ("\
-Usage: bfc [-sco:O:]\n\
+      printf (_("\
+Usage: %s [-sco:O:]\n"), program_name);
+      puts (_("\
   --help                   Display this information and exit.\n\
   --version                Display compiler's version and exit.\n\
   --save-temps             Do not delete temporary files.\n\
   -s                       Compile only, do not assemble or link.\n\
   -c                       Compile and assemble, but do not link.\n\
   -o <file>                Place the output into <file>.\n\
-  -On                      Level of optimization, default is 0.\n");
+  -On                      Level of optimization, default is 0."));
     }
 
   exit (status);
@@ -142,16 +156,12 @@ Usage: bfc [-sco:O:]\n\
 
 enum
 {
-  SAVE_TEMPS_OPTION = CHAR_MAX + 1,
-  HELP_OPTION,
-  VERSION_OPTION
+  SAVE_TEMPS_OPTION = CHAR_MAX + 1
 };
 
 static const struct option long_options[] =
 {
   {"save-temps", no_argument, NULL, SAVE_TEMPS_OPTION},
-  {"help", no_argument, NULL, HELP_OPTION},
-  {"version", no_argument, NULL, VERSION_OPTION},
   {NULL, 0, NULL, '\0'}
 };
 
@@ -167,7 +177,7 @@ diagnose_leading_hyphen (int argc, char **argv)
   for (int i = 1; i < argc; ++i)
     {
       const char *arg = argv[i];
-      if (arg[0] == '-' && strlen (arg) > 3 && lstat (arg, &st) == 0 && STRSUFFIX (arg, ".bf"))
+      if (arg[0] == '-' && strlen (arg) > 3 && lstat (arg, &st) == 0)
         {
           fprintf (stderr,
                    _("Try '%s ./%s' to get a compile the file %s.\n"),

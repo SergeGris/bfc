@@ -20,6 +20,8 @@
 #ifndef _SYSTEM_H
 #define _SYSTEM_H 1
 
+#include <alloca.h>
+
 #include <sys/cdefs.h>
 
 #if !defined(__attribute__)
@@ -28,35 +30,14 @@
 # endif
 #endif /* __attribute__ */
 
-#include <stddef.h>
+#include <stdint.h>
+typedef int8_t  i8;
+typedef int32_t i32;
+typedef int64_t i64;
 
-#include <alloca.h>
-
-/* Declare file status routines and bits.  */
-#if HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-
-#if HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-
-#include <unistd.h>
-
-#include "pathmax.h"
-#if !defined(PATH_MAX)
-# define PATH_MAX 8192
-#endif
-
-#include "configmake.h"
-
-#include <string.h>
 #include <errno.h>
 
-#include <xalloc.h>
-#include <xstrndup.h>
-
-/* Some systems don't define this; POSIX mentions it but says it is
+/* Some systems do not define this; POSIX mentions it but says it is
    obsolete.  gnulib defines it, but only on native Windows systems,
    and there only because MSVC 10 does.  */
 #if !defined(ENODATA)
@@ -69,22 +50,6 @@
 
 #include "version.h"
 
-#include "exitfail.h"
-
-/* Set exit_failure to STATUS if that's not the default already.  */
-static inline void
-initialize_exit_failure (int status)
-{
-  if (status != EXIT_FAILURE)
-    exit_failure = status;
-}
-
-
-#include <fcntl.h>
-
-#include <inttypes.h>
-
-
 /* Redirection and wildcarding when done by the utility itself.
    Generally a noop, but used in particular for OS/2.  */
 #if !defined(initialize_main)
@@ -92,13 +57,11 @@ initialize_exit_failure (int status)
 #  define initialize_main(ac, av) /* empty */
 # else
 #  define initialize_main(ac, av) \
-  do { _wildcard (ac, av); _response (ac, av); } while (0)
+    do { _wildcard (ac, av); _response (ac, av); } while (0)
 # endif
 #endif
 
 #include "stat-macros.h"
-
-#include <ctype.h>
 
 #include "gettext.h"
 
@@ -131,6 +94,9 @@ initialize_exit_failure (int status)
 # define S_(Msgid1, Msgid2, n) (n == 1 ? Msgid1 : Msgid2)
 #endif /* ENABLE_NLS */
 
+#include <limits.h>
+#include <inttypes.h>
+
 /* Return a value that pluralizes the same way that N does, in all
    languages we know of.  */
 static inline unsigned long int
@@ -141,11 +107,6 @@ select_plural (uintmax_t n)
   enum { PLURAL_REDUCER = 1000000 };
   return (n <= ULONG_MAX ? n : n % PLURAL_REDUCER + PLURAL_REDUCER);
 }
-
-#define STREQ(a, b)        (strcmp ((a), (b)) == 0)
-#define STREQ_LEN(a, b, n) (strncmp ((a), (b), (n)) == 0)
-#define STRPREFIX(a, b)    (strncmp ((a), (b), strlen (b)) == 0)
-#define STRSUFFIX(a, b)    ((strlen (a) < strlen (b)) ? false : strcmp ((a) + strlen (a) - strlen (b), (b)) == 0)
 
 #include "verify.h"
 

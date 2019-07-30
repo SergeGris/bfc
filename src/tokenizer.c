@@ -19,12 +19,15 @@
 
 #include "tokenizer.h"
 
+#include <error.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "system.h"
+
+#include "xalloc.h"
 
 Token
 parse_token (char symbol)
@@ -45,10 +48,6 @@ parse_token (char symbol)
       return T_GETCHAR;
     case '.':
       return T_PUTCHAR;
-    case ';':
-      return T_GETNUMBER;
-    case ':':
-      return T_PUTNUMBER;
     default:
       return T_COMMENT;
     }
@@ -73,7 +72,7 @@ parse_value (char symbol)
 char *
 strip_comments (const char *const source)
 {
-  const size_t size = strlen (source);
+  size_t size = strlen (source);
   char *result = xmalloc (size + 1);
   size_t j = 0;
   for (size_t i = 0; i < size; ++i)
@@ -83,18 +82,12 @@ strip_comments (const char *const source)
   return result;
 }
 
-static int
+static void
 append_to_array (const Command cmd,
                  Command **out_result,
                  size_t *out_result_len)
 {
-  size_t new_size = *out_result_len + 1;
-  Command *tmp = xrealloc (*out_result, new_size * sizeof (Command));
-  tmp[new_size - 1] = cmd;
-
-  *out_result = tmp;
-  *out_result_len = new_size;
-  return 0;
+  (*out_result)[(*out_result_len)++] = cmd;
 }
 
 int
@@ -104,17 +97,17 @@ tokenize (const char *const source,
 {
   /* Count [ and ] commands. Difference should be 0 at the end of the program, so
      that all jumps have a matching label.  */
-  int opening_label_count = 0;
-  int closing_label_count = 0;
+  i32 opening_label_count = 0;
+  i32 closing_label_count = 0;
+
+  /* Strip comments from the source.  */
+  char *cleaned_source = strip_comments (source);
 
   /* Initialize final result */
   *out_result_len = 0;
   *out_result = NULL;
   size_t result_len = 0;
-  Command *result = NULL;
-
-  /* Strip comments from the source.  */
-  char *cleaned_source = strip_comments (source);
+  Command *result = xmalloc (strlen (cleaned_source) * sizeof (Command));
 
   /* Command that is currently being constructed.  */
   Command command = { T_COMMENT, 0 };
@@ -138,7 +131,7 @@ tokenize (const char *const source,
         command.value += parse_value (c_current);
       else if (current == T_POINTER_INCDEC)
         {
-          const int32_t value = parse_value (c_current);
+          const i32 value = parse_value (c_current);
           command.value += value;
         }
       else if (current == T_LABEL)
@@ -154,8 +147,8 @@ tokenize (const char *const source,
             }
 
           /* Traverse final result backwards to find the correct label.  */
-          int correct_label = -1;
-          int open_labels_to_skip = 0;
+          i32 correct_label = -1;
+          ptrdiff_t open_labels_to_skip = 0;
           for (size_t kk = result_len - 1;; --kk)
             {
               if (result[kk].token == T_JUMP)
@@ -174,8 +167,8 @@ tokenize (const char *const source,
             }
           if (correct_label < 0)
             {
-              /* Error: Label mismatch */
               errorcode = 102;
+              error (0, 0, _("label mismatch"));
               break;
             }
           command.value = correct_label;
@@ -185,15 +178,7 @@ tokenize (const char *const source,
       if (current != next || (current != T_INCDEC && current != T_POINTER_INCDEC))
         {
           if (command.token != T_COMMENT)
-            {
-              int err = append_to_array (command, &result, &result_len);
-              if (err != 0)
-                {
-                  /* Error: Out of memory.  */
-                  errorcode = 101;
-                  break;
-                }
-            }
+            append_to_array (command, &result, &result_len);
           command.token = current;
           command.value = 0;
         }
@@ -201,8 +186,11 @@ tokenize (const char *const source,
   if (errorcode == 0)
     {
       if (opening_label_count != closing_label_count)
-        /* Error: Label mismatch.  */
-        errorcode = 102;
+        {
+          /* Error: Label mismatch.  */
+         errorcode = 102;
+         error (0, 0, _("label mismatch"));
+        }
     }
   else
     {
@@ -224,7 +212,7 @@ int
 optimize (const Command *const tokens,
           const size_t tokens_len,
           ProgramSource *out_result,
-          const int level)
+          const unsigned int level)
 {
   int err = 0;
 
@@ -292,10 +280,6 @@ optimize (const Command *const tokens,
           else if (current.token == T_PUTCHAR)
             found_output = true;
 
-          #if !STRICT_MULLER
-
-          #endif
-
           if (found_input && found_output)
             break;
         }
@@ -350,7 +334,7 @@ optimize (const Command *const tokens,
 int
 tokenize_and_optimize (const char *const source,
                        ProgramSource *out_result,
-                       const int level)
+                       const unsigned int level)
 {
   out_result->tokens = NULL;
   out_result->length = 0;

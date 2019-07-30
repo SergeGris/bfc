@@ -18,9 +18,9 @@
 #ifndef _TOKENIZER_H
 #define _TOKENIZER_H 1
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h> /* For int32_t */
+
+#include "system.h"
 
 /*
  * For optimized result, BrainFuck code is first converted to token-value pairs:
@@ -40,11 +40,6 @@ typedef enum
   T_JUMP,
   T_GETCHAR,
   T_PUTCHAR,
-#if !STRICT_MULLER
-  /* get and put current value as a 32 bit number */
-  T_GETNUMBER,
-  T_PUTNUMBER,
-#endif
   T_MAX
 } Token;
 
@@ -52,7 +47,7 @@ typedef enum
 typedef struct
 {
   Token token;
-  int32_t value;
+  i32 value;
 } Command;
 
 /* Complete Brainfuck program after parsing and optimizing.  */
@@ -74,9 +69,9 @@ extern int tokenize (const char *const source,
 extern int optimize (const Command *const tokens,
                      const size_t tokens_len,
                      ProgramSource *out_result,
-                     const int level);
+                     const unsigned int level);
 extern int tokenize_and_optimize (const char *const source,
                                   ProgramSource *out_result,
-                                  const int level);
+                                  const unsigned int level);
 
 #endif /* _TOKENIZER_H */

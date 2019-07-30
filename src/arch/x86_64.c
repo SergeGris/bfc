@@ -15,225 +15,97 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Linux kernel system calls on x86_64 system.  */
-static const int syscall_stdin     = 0;
-static const int syscall_stdout    = 1;
-static const int syscall_sys_exit  = 60;
-static const int syscall_sys_read  = 0;
-static const int syscall_sys_write = 1;
+static const char init_variables[] =
+".section    .data\n"
+"array:\n"
+"    .zero   %u\n"
+"buffer:\n"
+"    .byte   0\n";
 
-int
-tokens_to_asm (ProgramSource *const source,
-               char **final_output,
-               size_t *final_output_length)
-{
-  *final_output = NULL;
-  *final_output_length = 0;
-  char *output = NULL;
+static const char init_section_text[] =
+".section    .text\n"
+".globl      _start\n"
+"\n";
 
-  /* Initialize variables.  */
-  str_append (&output, "\
-.section    .data\n\
-array:\n\
-    .zero   %d\n\
-buffer:\n"
+static const char getchar_body[] =
+".type getchar,@function\n"
+"getchar:\n"
+"    pushq   %%rax\n"
+"    pushq   %%rdi\n"
+"    pushq   %%rsi\n"
+"    pushq   %%rdx\n"
+"    xorq    %%rax,%%rax\n"
+"    xorq    %%rdi,%%rdi\n"
+"    movq    $buffer,%%rsi\n"
+"    movq    $1,%%rdx\n"
+"    syscall\n"
+"    popq    %%rdx\n"
+"    popq    %%rsi\n"
+"    popq    %%rdi\n"
+"    popq    %%rax\n"
+"    movb    (buffer),%%cl\n"
+"    movb    %%cl,(%%rax)\n"
+"    retq\n"
+"\n";
 
-#if STRICT_MULLER
-"\
-    .byte   0\n"
-#else
-"\
-    .long   0\n"
-#endif
+static const char putchar_body[] =
+".type putchar,@function\n"
+"putchar:\n"
+"    pushq   %%rax\n"
+"    pushq   %%rdi\n"
+"    pushq   %%rsi\n"
+"    pushq   %%rdx\n"
+"    movb    (%%rax),%%bl\n"
+"    movb    %%bl,(buffer)\n"
+"    movq    $1,%%rax\n"
+"    movq    $1,%%rdi\n"
+"    movq    $buffer,%%rsi\n"
+"    movq    $1,%%rdx\n"
+"    syscall\n"
+"    popq    %%rdx\n"
+"    popq    %%rsi\n"
+"    popq    %%rdi\n"
+"    popq    %%rax\n"
+"    retq\n"
+"\n";
 
-, DATA_ARRAY_SIZE);
+static const char start_begin_and_init_array[] =
+".type _start,@function\n"
+"_start:\n"
+"    movq    $array,%%rax\n";
 
-  /* Beginning of the code block.  */
-  str_append (&output, "\
-.section    .text\n\
-.globl      _start\n\n\
-");
+static const char start_end[] =
+"\n"
+"    movq    $60,%%rax\n"
+"    xorq    %%rdi,%%rdi\n"
+"    syscall\n";
 
-  /* Subroutines for I/O.  */
-  if (source->have_getchar_commands)
-    {
-      str_append (&output, "\
-.type getchar,@function\n\
-getchar:\n\
-    pushq   %%rax\n\
-    pushq   %%rdi\n\
-    pushq   %%rsi\n\
-    pushq   %%rdx\n\
-    movq    $%d,%%rax\n\
-    movq    $%d,%%rdi\n\
-    movq    $buffer,%%rsi\n\
-    movq    $1,%%rdx\n\
-    syscall\n\
-    popq    %%rdx\n\
-    popq    %%rsi\n\
-    popq    %%rdi\n\
-    popq    %%rax\n\
-    movb    (buffer),%%cl\n\
-    movb    %%cl,(%%rax)\n\
-    retq\n\
-\n\
-", syscall_sys_read, syscall_stdin);
-    }
-  if (source->have_putchar_commands)
-    {
-      str_append (&output, "\
-.type putchar,@function\n\
-putchar:\n\
-    pushq   %%rax\n\
-    pushq   %%rdi\n\
-    pushq   %%rsi\n\
-    pushq   %%rdx\n\
-    movb    (%%rax),%%bl\n\
-    movb    %%bl,(buffer)\n\
-    movq    $%d,%%rax\n\
-    movq    $%d,%%rdi\n\
-    movq    $buffer,%%rsi\n\
-    movq    $1,%%rdx\n\
-    syscall\n\
-    popq    %%rdx\n\
-    popq    %%rsi\n\
-    popq    %%rdi\n\
-    popq    %%rax\n\
-    retq\n\
-\n\
-", syscall_sys_write, syscall_stdout);
-    }
+static const char increment_current_value[] =
+"    movb    $%d,%%bl\n"
+"    addb    %%bl,(%%rax)\n";
+static const char decrement_current_value[] =
+"    movb    $%d,%%bl\n"
+"    subb    %%bl,(%%rax)\n";
+static const char increment_current_pointer[] =
+"    addq    $%d,%%rax\n";
+static const char decrement_current_pointer[] =
+"    subq    $%d,%%rax\n";
 
-  /* Execution starts at this point.  */
-  str_append (&output, "\
-.type _start,@function\n\
-_start:\n\
-    movq    $array,%%rax\n\
-");
+static const char label_begin[] =
+"\n"
+".LB%d:\n"
+"    cmpb    $0,(%%rax)\n"
+"    je      .LE%d\n";
+static const char label_end[] =
+"\n"
+".LE%d:\n"
+"    cmpb    $0,(%%rax)\n"
+"    jne     .LB%d\n";
 
-  /* Convert tokens to machine code.  */
-  int errorcode = 0;
-  for (size_t i = 0; i < source->length && errorcode == 0; ++i)
-    {
-      const Command current = source->tokens[i];
-      switch (current.token)
-        {
-        case T_INCDEC:
-          if (current.value > 0)
-            {
-              str_append (&output, "\
-    movb    $%d,%%bl\n\
-    addb    %%bl,(%%rax)\n\
-", +current.value & 0xFF);
-            }
-          else if (current.value < 0)
-            {
-              str_append (&output, "\
-    movb    $%d,%%bl\n\
-    subb    %%bl,(%%rax)\n\
-", -current.value & 0xFF);
-            }
-          else
-            {
-              /* Command has no effect.  */
-              ;
-            }
-          break;
-
-        case T_POINTER_INCDEC:
-          if (current.value > 0)
-            {
-              str_append (&output, "\
-    movq    $%d,%%rbx\n\
-    addq    %%rbx,%%rax\n\
-", +current.value);
-            }
-          else if (current.value < 0)
-            {
-              str_append (&output, "\
-    movq    $%d,%%rbx\n\
-    subq    %%rbx,%%rax\n\
-", -current.value);
-            }
-          else
-            {
-              /* Command has no effect.  */
-              ;
-            }
-          break;
-
-        case T_LABEL:
-          str_append (&output, "\
-\n\
-.LB%d:\n\
-    cmpb    $0,(%%rax)\n\
-    je      .LE%d\n\
-", current.value, current.value);
-          break;
-        case T_JUMP:
-          str_append (&output, "\
-\n\
-.LE%d:\n\
-    cmpb    $0,(%%rax)\n\
-    jne     .LB%d\n\
-", current.value, current.value);
-          break;
-
-        case T_GETCHAR:
-          if (!source->have_getchar_commands)
-            {
-              /* Error: Unexpected token.  */
-              errorcode = 202;
-            }
-          else
-            {
-              str_append (&output, "\
-    callq   getchar\n\
-");
-            }
-          break;
-
-        case T_PUTCHAR:
-          if (!source->have_putchar_commands)
-            {
-              /* Error: Unexpected token.  */
-              errorcode = 202;
-            }
-          else
-            {
-              str_append (&output, "\
-    callq   putchar\n\
-");
-            }
-          break;
-
-        case T_COMMENT:
-        default:
-          break;
-        }
-    }
-
-  /* Write quit commands.  */
-  if (errorcode == 0)
-    {
-      str_append (&output, "\
-\n\
-    movq    $%d,%%rax\n\
-    xorq    %%rdi,%%rdi\n\
-    syscall\n\
-", syscall_sys_exit);
-    }
-  else
-    {
-      free (output);
-      return errorcode;
-    }
-
-  *final_output = output;
-  *final_output_length = strlen (output);
-
-  return 0;
-}
+static const char call_getchar[] =
+"    callq   getchar\n";
+static const char call_putchar[] =
+"    callq   putchar\n";
 
 int
 compile_to_obj (char *asm_filename, char *obj_filename)

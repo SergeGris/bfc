@@ -28,6 +28,8 @@
 
 #include "arch.h"
 
+#include "xalloc.h"
+
 int
 str_append (char **str, const char *format, ...)
 {
@@ -62,14 +64,12 @@ write_file (const char *filename,
   FILE *fp = fopen (filename, "w");
   if (unlikely (fp == NULL))
     {
-      /* Error: Writing failed.  */
       error (0, errno, "%s", filename);
       return -1;
     }
   size_t result = fwrite (source, sizeof (char), source_length, fp);
   if (result != source_length)
     {
-      /* Error: Writing failed.  */
       error (0, errno, "%s", filename);
       return -1;
     }
