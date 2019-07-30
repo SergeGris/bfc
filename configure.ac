@@ -68,6 +68,20 @@ AC_FUNC_FORK
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
 AM_GNU_GETTEXT_VERSION([0.19.2])
 
+AC_ARG_ENABLE([debug],
+              AS_HELP_STRING([--disable-debug],[make compile release version directly]),
+              [enable_debug=${enableval}],[enable_debug=yes])
+
+if test "x${enable_debug}" == "xyes"; then
+  AC_DEFINE([_DEBUG], 1, [debug version is enabled])
+  CFLAGS="$CFLAGS -Og -ggdb"
+else
+  AC_DEFINE([NDEBUG], 1, [debug version is disabled])
+  CFLAGS="$CFLAGS -ffunction-sections -fno-asynchronous-unwind-tables"
+  LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
+  AC_MSG_NOTICE([NOTE: all debug symbols will be removed])
+fi
+
 AC_CONFIG_FILES([Makefile
                  gnulib-tests/Makefile])
 

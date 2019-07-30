@@ -229,20 +229,12 @@ parseopt (int argc, char **argv)
     {
       char *file = *operandp;
       struct stat st;
-      if (strlen (file) > 3)
-        {
-          if (STRSUFFIX (file, ".bf") && in_filename == NULL && stat (file, &st) == 0)
-            /* 'in_filename' by default is NULL.  */
-            in_filename = file;
-          else if (errno != 0)
-            die (EXIT_TROUBLE, errno, "%s", quoteaf (file));
-          else if (in_filename == NULL)
-            die (EXIT_TROUBLE, 0, _("BrainFuck source code file must have a '.bf' extension"));
-          else if (in_filename != NULL)
-            die (EXIT_TROUBLE, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
-        }
-      else
-        die (EXIT_TROUBLE, 0, _("BrainFuck source code file must have a '.bf' extension"));
+      if (in_filename == NULL && stat (file, &st) == 0)
+        in_filename = file;
+      else if (errno != 0)
+        die (EXIT_TROUBLE, errno, "%s", quoteaf (file));
+      else if (in_filename != NULL)
+        die (EXIT_TROUBLE, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
     }
 
   if (in_filename == NULL)

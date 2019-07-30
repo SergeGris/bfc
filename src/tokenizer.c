@@ -19,6 +19,7 @@
 
 #include "tokenizer.h"
 
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,6 +45,10 @@ parse_token (char symbol)
       return T_GETCHAR;
     case '.':
       return T_PUTCHAR;
+    case ';':
+      return T_GETNUMBER;
+    case ':':
+      return T_PUTNUMBER;
     default:
       return T_COMMENT;
     }
@@ -133,7 +138,7 @@ tokenize (const char *const source,
         command.value += parse_value (c_current);
       else if (current == T_POINTER_INCDEC)
         {
-          const int value = parse_value (c_current);
+          const int32_t value = parse_value (c_current);
           command.value += value;
         }
       else if (current == T_LABEL)
@@ -287,6 +292,10 @@ optimize (const Command *const tokens,
           else if (current.token == T_PUTCHAR)
             found_output = true;
 
+          #if !STRICT_MULLER
+
+          #endif
+
           if (found_input && found_output)
             break;
         }
@@ -302,11 +311,10 @@ optimize (const Command *const tokens,
     {
       /* Error: Not implemented.  */
       err = 103;
+      error (0, 0, _("optimization level %d is not implemented"), level);
 
       if (!have_putchar_commands && !have_getchar_commands)
-        {
-
-        }
+        { }
     }
 
   if (err != 0)

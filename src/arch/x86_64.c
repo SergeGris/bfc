@@ -15,21 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <config.h>
-
-#include "arch.h"
-
-#include <assert.h>
-#include <error.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-
-#include "system.h"
-
-#include "compiler.h"
-
 /* Linux kernel system calls on x86_64 system.  */
 static const int syscall_stdin     = 0;
 static const int syscall_stdout    = 1;
@@ -51,69 +36,79 @@ tokens_to_asm (ProgramSource *const source,
 .section    .data\n\
 array:\n\
     .zero   %d\n\
-buffer:\n\
-    .byte   0\n\
-\n\
-", DATA_ARRAY_SIZE);
+buffer:\n"
+
+#if STRICT_MULLER
+"\
+    .byte   0\n"
+#else
+"\
+    .long   0\n"
+#endif
+
+, DATA_ARRAY_SIZE);
 
   /* Beginning of the code block.  */
   str_append (&output, "\
 .section    .text\n\
-.global     _start\n\n\
+.globl      _start\n\n\
 ");
 
   /* Subroutines for I/O.  */
   if (source->have_getchar_commands)
     {
       str_append (&output, "\
+.type getchar,@function\n\
 getchar:\n\
-    push     %%rax\n\
-    push     %%rdi\n\
-    push     %%rsi\n\
-    push     %%rdx\n\
-    mov      $%d,%%rax\n\
-    mov      $%d,%%rdi\n\
-    mov      $buffer,%%rsi\n\
-    mov      $1,%%rdx\n\
+    pushq   %%rax\n\
+    pushq   %%rdi\n\
+    pushq   %%rsi\n\
+    pushq   %%rdx\n\
+    movq    $%d,%%rax\n\
+    movq    $%d,%%rdi\n\
+    movq    $buffer,%%rsi\n\
+    movq    $1,%%rdx\n\
     syscall\n\
-    pop      %%rdx\n\
-    pop      %%rsi\n\
-    pop      %%rdi\n\
-    pop      %%rax\n\
-    mov      (buffer),%%cl\n\
-    mov      %%cl,(%%rax)\n\
-    ret\n\
+    popq    %%rdx\n\
+    popq    %%rsi\n\
+    popq    %%rdi\n\
+    popq    %%rax\n\
+    movb    (buffer),%%cl\n\
+    movb    %%cl,(%%rax)\n\
+    retq\n\
 \n\
 ", syscall_sys_read, syscall_stdin);
     }
   if (source->have_putchar_commands)
     {
       str_append (&output, "\
+.type putchar,@function\n\
 putchar:\n\
-    push    %%rax\n\
-    push    %%rdi\n\
-    push    %%rsi\n\
-    push    %%rdx\n\
-    mov     (%%rax),%%bl\n\
-    mov     %%bl,(buffer)\n\
-    mov     $%d,%%rax\n\
-    mov     $%d,%%rdi\n\
-    mov     $buffer,%%rsi\n\
-    mov     $1,%%rdx\n\
+    pushq   %%rax\n\
+    pushq   %%rdi\n\
+    pushq   %%rsi\n\
+    pushq   %%rdx\n\
+    movb    (%%rax),%%bl\n\
+    movb    %%bl,(buffer)\n\
+    movq    $%d,%%rax\n\
+    movq    $%d,%%rdi\n\
+    movq    $buffer,%%rsi\n\
+    movq    $1,%%rdx\n\
     syscall\n\
-    pop     %%rdx\n\
-    pop     %%rsi\n\
-    pop     %%rdi\n\
-    pop     %%rax\n\
-    ret\n\
+    popq    %%rdx\n\
+    popq    %%rsi\n\
+    popq    %%rdi\n\
+    popq    %%rax\n\
+    retq\n\
 \n\
 ", syscall_sys_write, syscall_stdout);
     }
 
   /* Execution starts at this point.  */
   str_append (&output, "\
+.type _start,@function\n\
 _start:\n\
-    mov     $array,%%rax\n\
+    movq    $array,%%rax\n\
 ");
 
   /* Convert tokens to machine code.  */
@@ -127,15 +122,15 @@ _start:\n\
           if (current.value > 0)
             {
               str_append (&output, "\
-    mov     $%d,%%bl\n\
-    add     %%bl,(%%rax)\n\
+    movb    $%d,%%bl\n\
+    addb    %%bl,(%%rax)\n\
 ", +current.value & 0xFF);
             }
           else if (current.value < 0)
             {
               str_append (&output, "\
-    mov     $%d,%%bl\n\
-    sub     %%bl,(%%rax)\n\
+    movb    $%d,%%bl\n\
+    subb    %%bl,(%%rax)\n\
 ", -current.value & 0xFF);
             }
           else
@@ -149,15 +144,15 @@ _start:\n\
           if (current.value > 0)
             {
               str_append (&output, "\
-    mov     $%d,%%rbx\n\
-    add     %%rbx,%%rax\n\
+    movq    $%d,%%rbx\n\
+    addq    %%rbx,%%rax\n\
 ", +current.value);
             }
           else if (current.value < 0)
             {
               str_append (&output, "\
-    mov     $%d,%%rbx\n\
-    sub     %%rbx,%%rax\n\
+    movq    $%d,%%rbx\n\
+    subq    %%rbx,%%rax\n\
 ", -current.value);
             }
           else
@@ -170,17 +165,17 @@ _start:\n\
         case T_LABEL:
           str_append (&output, "\
 \n\
-label_%d_begin:\n\
+.LB%d:\n\
     cmpb    $0,(%%rax)\n\
-    je      label_%d_end\n\
+    je      .LE%d\n\
 ", current.value, current.value);
           break;
         case T_JUMP:
           str_append (&output, "\
 \n\
-label_%d_end:\n\
+.LE%d:\n\
     cmpb    $0,(%%rax)\n\
-    jne     label_%d_begin\n\
+    jne     .LB%d\n\
 ", current.value, current.value);
           break;
 
@@ -193,7 +188,7 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    getchar\n\
+    callq   getchar\n\
 ");
             }
           break;
@@ -207,7 +202,7 @@ label_%d_end:\n\
           else
             {
               str_append (&output, "\
-    call    putchar\n\
+    callq   putchar\n\
 ");
             }
           break;
@@ -223,8 +218,8 @@ label_%d_end:\n\
     {
       str_append (&output, "\
 \n\
-    mov     $%d,%%rax\n\
-    xor     %%rdi,%%rdi\n\
+    movq    $%d,%%rax\n\
+    xorq    %%rdi,%%rdi\n\
     syscall\n\
 ", syscall_sys_exit);
     }
@@ -255,7 +250,7 @@ compile_to_obj (char *asm_filename, char *obj_filename)
 int
 link_to_elf (char *obj_filename, char *elf_filename)
 {
-  char *ld[] = { "ld", "-melf_x86_64", "-s", "-o", elf_filename, obj_filename, (char *) NULL };
+  char *ld[] = { "ld", "-melf_x86_64", "-O2", "--gc-sections", "--strip-all", "-o", elf_filename, obj_filename, (char *) NULL };
 
   int err = exec (ld);
   if (err != 0)

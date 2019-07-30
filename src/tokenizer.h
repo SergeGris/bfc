@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h> /* For int32_t */
 
 /*
  * For optimized result, BrainFuck code is first converted to token-value pairs:
@@ -38,14 +39,20 @@ typedef enum
   T_LABEL,
   T_JUMP,
   T_GETCHAR,
-  T_PUTCHAR
+  T_PUTCHAR,
+#if !STRICT_MULLER
+  /* get and put current value as a 32 bit number */
+  T_GETNUMBER,
+  T_PUTNUMBER,
+#endif
+  T_MAX
 } Token;
 
 /* Single Brainfuck command after parsing.  */
 typedef struct
 {
   Token token;
-  int value;
+  int32_t value;
 } Command;
 
 /* Complete Brainfuck program after parsing and optimizing.  */
