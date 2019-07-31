@@ -272,7 +272,7 @@ char *
 mktmp (const char *template, size_t suff_len)
 {
   char *env = getenv ("TMPDIR");
-  char *tmpdir = (env != NULL && *env != '\0' ? env : "/tmp");
+  char *tmpdir = ((env != NULL && *env != '\0') ? env : "/tmp");
 
   char *tmpfile = file_name_concat (tmpdir, template, NULL);
 
@@ -287,8 +287,7 @@ mktmp (const char *template, size_t suff_len)
   int fd = mktemp_len (tmpfile, suff_len, x_len, true);
 
   if (fd < 0 || close (fd) != 0)
-    error (0, errno, _("failed to create file via template %s"),
-           quote (template));
+    die (EXIT_FAILURE, errno, _("failed to create file via template %s"), quote (template));
 
   return tmpfile;
 }
@@ -363,7 +362,7 @@ main (int argc, char **argv)
   /* Open file.  */
   char *source = read_file (in_filename);
   if (source == NULL)
-    die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), in_filename);
+    die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), quoteaf (in_filename));
 
   /* Interpret symbols.  */
   err = tokenize_and_optimize (source, &tokenized_source, optimization_level);

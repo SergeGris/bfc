@@ -43,6 +43,8 @@ str_append (char **str, const char *format, ...)
 
   vsprintf (formatted_str, format, argp);
 
+  va_end (argp);
+
   const size_t old_length = (*str == NULL || **str == '\0' ? 0 : strlen (*str));
   char *new_str = xcalloc (old_length + strlen (formatted_str) + 1, sizeof (char));
 
@@ -64,16 +66,21 @@ write_file (const char *filename,
   FILE *fp = fopen (filename, "w");
   if (unlikely (fp == NULL))
     {
-      error (0, errno, "%s", filename);
+      error (0, errno, "%s", quoteaf (filename));
       return -1;
     }
   size_t result = fwrite (source, sizeof (char), source_length, fp);
   if (result != source_length)
     {
-      error (0, errno, "%s", filename);
+      error (0, errno, "%s", quoteaf (filename));
+      if (fclose (fp) != 0)
+        error (0, errno, "%s", quoteaf (filename));
       return -1;
     }
-  fclose (fp);
+
+  if (fclose (fp) != 0)
+    error (0, errno, "", quoteaf (filename));
+
   return 0;
 }
 
