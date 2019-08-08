@@ -74,11 +74,11 @@ AC_ARG_ENABLE([debug],
 
 if test "x${enable_debug}" == "xyes"; then
   AC_DEFINE([_DEBUG], 1, [debug version is enabled])
-  CFLAGS="$CFLAGS -Og -ggdb"
+  CFLAGS="-Og -ggdb"
 else
   AC_DEFINE([NDEBUG], 1, [debug version is disabled])
-  CFLAGS="$CFLAGS -s -ffunction-sections -fno-asynchronous-unwind-tables"
-  LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
+  CFLAGS="-s -ffunction-sections -fno-asynchronous-unwind-tables $CFLAGS"
+  LDFLAGS="-Wl,--gc-sections -Wl,--strip-all $LDFLAGS"
   AC_MSG_NOTICE([NOTE: all debug symbols will be removed])
 fi
 

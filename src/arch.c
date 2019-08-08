@@ -51,7 +51,7 @@ exec (char **arg)
 
   return status;
 }
-/*
+
 #if defined(__amd64__) || defined(__x86_64__) || defined(_AMD64_)
 # include "arch/x86_64.c"
 #elif defined(__i386__)
@@ -63,21 +63,6 @@ exec (char **arg)
 #elif defined(__m68k__)
 # include "arch/m68k.c"
 #endif
-*/
-#include "arch/x86.c"
-
-verify (sizeof (getchar_body)               <= 512);
-verify (sizeof (putchar_body)               <= 512);
-verify (sizeof (start_begin_and_init_array) <= 512);
-verify (sizeof (increment_current_value)    <= 512);
-verify (sizeof (decrement_current_value)    <= 512);
-verify (sizeof (increment_current_pointer)  <= 512);
-verify (sizeof (decrement_current_pointer)  <= 512);
-verify (sizeof (label_begin)                <= 512);
-verify (sizeof (label_end)                  <= 512);
-verify (sizeof (call_getchar)               <= 512);
-verify (sizeof (call_putchar )              <= 512);
-verify (sizeof (start_end)                  <= 512);
 
 int
 tokens_to_asm (ProgramSource *const source,
