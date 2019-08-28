@@ -99,7 +99,7 @@ typedef int64_t i64;
 
 /* Return a value that pluralizes the same way that N does, in all
    languages we know of.  */
-static inline unsigned long int
+static inline __attribute__ ((__const__)) unsigned long int
 select_plural (uintmax_t n)
 {
   /* Reduce by a power of ten, but keep it away from zero.

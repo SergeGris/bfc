@@ -30,6 +30,7 @@ extern int str_append (char **str, const char *format, ...)
 
 /* Compiles tokenized source to executable.  */
 extern int translate_to_asm (const char *filename,
-                             ProgramSource *const source);
+                             ProgramSource *const source)
+  __attribute__ ((__nonnull__ (1, 2)));
 
 #endif /* _COMPILER_H */

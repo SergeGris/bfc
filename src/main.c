@@ -54,34 +54,27 @@ read_file (const char *filename)
 {
   char *buf = NULL;
   long  len = 0L;
-  FILE *fp  = fopen (filename, "r");
+  FILE *fp  = NULL;
 
-  if (unlikely (fp == NULL
-             || fseek (fp, 0L, SEEK_END) < 0
-             || (len = ftell (fp))       < 0
-             || fseek (fp, 0L, SEEK_SET) < 0))
-    {
-      error (0, errno, "%s", quotef (filename));
-      return NULL;
-    }
+  if ((fp = fopen (filename, "r")) == NULL
+    || fseek (fp, 0L, SEEK_END) < 0
+    || (len = ftell (fp))       < 0
+    || fseek (fp, 0L, SEEK_SET) < 0)
+    goto lfail;
 
   buf = xmalloc (len + 1);
   size_t res = fread (buf, sizeof (char), len, fp);
-  if (res != len)
-    {
-      /* Error: Reading failed */
-      error (0, errno, "%s", quotef (filename));
-      free (buf);
-      return NULL;
-    }
+  if (res != len
+   || fclose (fp) != 0)
+    goto lfail;
   buf[len] = '\0';
-  if (unlikely (fclose (fp) != 0))
-    {
-      error (0, errno, "%s", quotef (filename));
-      free (buf);
-      return NULL;
-    }
   return buf;
+
+lfail:
+  error (0, errno, "%s", quotef (filename));
+  if (buf != NULL)
+    free (buf);
+  return NULL;
 }
 
 static const char *
@@ -89,25 +82,26 @@ change_extension (char *filename, const char *new_extension)
 {
   if (unlikely (filename == NULL || *filename == '\0'))
     return "";
+  if (unlikely (new_extension == NULL))
+    return filename;
 
   size_t len = strlen (filename);
-  char *tmp = filename + len - 1;
 
-  for (; tmp >= filename; --tmp)
+  for (char *tmp = filename + len - 1; tmp >= filename; --tmp)
     {
       if (*tmp == '.')
         {
-          ++tmp;
           while ((*tmp++ = *new_extension++) != '\0')
             ;
+          *tmp = '\0';
           return filename;
         }
     }
 
-  tmp = filename + len;
-  *tmp++ = '.';
+  char *tmp = filename + len;
   while ((*tmp++ = *new_extension++) != '\0')
     ;
+  *tmp = '\0';
 
   return filename;
 }
@@ -123,14 +117,11 @@ cut_path (char *str)
   return tmp + 1;
 }
 
-static char *in_filename               = NULL;
-static char *out_filename              = "a.out";
-static char *out_asm                   = NULL;
-static char *out_obj                   = NULL;
 static bool do_assemble                = true;
 static bool do_link                    = true;
 static bool save_temps                 = false;
 static unsigned int optimization_level = 0;
+static unsigned int files_to_compile   = 0;
 
 void
 usage (int status)
@@ -199,9 +190,10 @@ parseopt (int argc, char **argv)
   while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) != -1)
     switch (optc)
       {
+        /*
       case 'o':
         out_filename = optarg;
-        break;
+        break;*/
 
       case 'O':
         if (*optarg == '\0' || *(optarg + 1) != '\0' || (*optarg < '0' && *optarg > '9'))
@@ -214,20 +206,16 @@ parseopt (int argc, char **argv)
             optimization_level = 1;
           }
         break;
-
       case 'c':
         do_assemble = true;
         do_link = false;
         break;
-
       case 's':
         do_assemble = do_link = false;
         break;
-
       case SAVE_TEMPS_OPTION:
         save_temps = true;
         break;
-
       default:
         diagnose_leading_hyphen (argc, argv);
         usage (EXIT_FAILURE);
@@ -239,15 +227,13 @@ parseopt (int argc, char **argv)
     {
       char *file = *operandp;
       struct stat st;
-      if (in_filename == NULL && stat (file, &st) == 0)
-        in_filename = file;
+      if (stat (file, &st) == 0)
+        files_to_compile++;
       else if (errno != 0)
         die (EXIT_TROUBLE, errno, "%s", quoteaf (file));
-      else if (in_filename != NULL)
-        die (EXIT_TROUBLE, 0, _("extra BrainFuck source code file %s"), quoteaf (file));
     }
 
-  if (in_filename == NULL)
+  if (files_to_compile == 0)
     die (EXIT_FAILURE, 0, _("fatal error: no input files."));
 }
 
@@ -292,22 +278,13 @@ mktmp (const char *template, size_t suff_len)
   return tmpfile;
 }
 
-int
-main (int argc, char **argv)
+void
+compile_file (char *filename)
 {
-  /* Setting values of global variables.  */
-  initialize_main (&argc, &argv);
-  set_program_name (argv[0]);
-  setlocale (LC_ALL, "");
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  textdomain (PACKAGE);
-
-  atexit (close_stdout);
-
-  parseopt (argc, argv);
-
-  char *cut_in_filename = cut_path (in_filename);
-  const size_t cut_in_filename_len = strlen (cut_in_filename);
+  char *out_asm = NULL;
+  char *out_obj = NULL;
+  char *clean_filename = cut_path (filename);
+  const size_t clean_filename_len = strlen (clean_filename);
 
   if (save_temps || !do_link)
     {
@@ -315,24 +292,24 @@ main (int argc, char **argv)
         {
           if (!do_assemble)
             {
-              out_asm = xstrndup (cut_in_filename, cut_in_filename_len - 1);
-              change_extension (out_asm, "s");
+              out_asm = xstrndup (clean_filename, clean_filename_len - 1);
+              change_extension (out_asm, ".s");
             }
           else
             {
               out_asm = mktmp ("bfc-XXXXXXXXXXXX.s", 2);
 
-              out_obj = xstrndup (cut_in_filename, cut_in_filename_len - 1);
-              change_extension (out_obj, "o");
+              out_obj = xstrndup (clean_filename, clean_filename_len - 1);
+              change_extension (out_obj, ".o");
             }
         }
       else
         {
-          out_asm = xstrndup (cut_in_filename, cut_in_filename_len - 1);
-          out_obj = xstrndup (cut_in_filename, cut_in_filename_len - 1);
+          out_asm = xstrndup (clean_filename, clean_filename_len - 1);
+          out_obj = xstrndup (clean_filename, clean_filename_len - 1);
 
-          change_extension (cut_in_filename, "s");
-          change_extension (cut_in_filename, "o");
+          change_extension (clean_filename, ".s");
+          change_extension (clean_filename, ".o");
         }
     }
   else
@@ -341,41 +318,29 @@ main (int argc, char **argv)
       out_obj = mktmp ("bfc-XXXXXXXXXXXX.o", 2);
     }
 
-  bool out_filename_was_allocated = false;
-
-  if ((!do_assemble || !do_link) && !save_temps && !strcmp (out_filename, "a.out"))
-    {
-      char *buf = xmalloc (cut_in_filename_len);
-
-      /* Write in buf filename + '.' */
-      snprintf (buf, cut_in_filename_len, "%s", cut_in_filename);
-      buf[cut_in_filename_len - 1] = (do_assemble ? 'o' : 's');
-      buf[cut_in_filename_len - 0] = '\0';
-
-      out_filename = buf;
-      out_filename_was_allocated = true;
-    }
+  char *out_filename = xmalloc (clean_filename_len + 1);
+  snprintf (out_filename, clean_filename_len + 1, "%s", clean_filename);
+  change_extension (out_filename, "");
 
   ProgramSource tokenized_source;
-  int err = 0;
 
   /* Open file.  */
-  char *source = read_file (in_filename);
+  char *source = read_file (filename);
   if (source == NULL)
-    die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), quoteaf (in_filename));
+    die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), quoteaf (filename));
 
   /* Interpret symbols.  */
-  err = tokenize_and_optimize (source, &tokenized_source, optimization_level);
+  int err = tokenize_and_optimize (source, &tokenized_source, optimization_level);
   if (err != 0)
     {
-      error (0, 0, _("error code: %d"), err);
+      error (0, 0, _("error code: %i"), err);
       free (source);
       exit (err);
     }
 
   err = translate_to_asm (out_asm, &tokenized_source);
   if (err != 0)
-    error (0, 0, _("error code: %d"), err);
+    error (0, 0, _("error code: %i"), err);
 
   free (tokenized_source.tokens);
   free (source);
@@ -394,10 +359,30 @@ main (int argc, char **argv)
       exec (rm);
     }
 
-  if (out_filename_was_allocated)
-    free (out_filename);
+  free (out_filename);
   free (out_obj);
   free (out_asm);
+}
 
-  return err;
+int
+main (int argc, char **argv)
+{
+  /* Setting values of global variables.  */
+  initialize_main (&argc, &argv);
+  set_program_name (argv[0]);
+  setlocale (LC_ALL, "");
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
+
+  atexit (close_stdout);
+
+  parseopt (argc, argv);
+
+  argc -= optind;
+  argv += optind;
+
+  for (int i = 0; i < argc; i++)
+    compile_file (argv[i]);
+
+  return EXIT_SUCCESS;
 }

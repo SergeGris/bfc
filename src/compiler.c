@@ -36,12 +36,12 @@ str_append (char **str, const char *format, ...)
   /* This is only used to combine arguments,
      so fixed-size string should be safe to use.  */
   char formatted_str[512];
-  assert (strlen (format) <= sizeof (formatted_str));
+  assert (unlikely (strlen (format) <= sizeof (formatted_str)));
 
   va_list argp;
   va_start (argp, format);
 
-  vsprintf (formatted_str, format, argp);
+  int err = vsprintf (formatted_str, format, argp);
 
   va_end (argp);
 
@@ -55,7 +55,7 @@ str_append (char **str, const char *format, ...)
   free (*str);
   *str = new_str;
 
-  return 0;
+  return err >= 0 ? 0 : -1;
 }
 
 static int
@@ -70,7 +70,7 @@ write_file (const char *filename,
       return -1;
     }
   size_t result = fwrite (source, sizeof (char), source_length, fp);
-  if (result != source_length)
+  if (unlikely (result != source_length))
     {
       error (0, errno, "%s", quoteaf (filename));
       if (fclose (fp) != 0)
@@ -78,8 +78,8 @@ write_file (const char *filename,
       return -1;
     }
 
-  if (fclose (fp) != 0)
-    error (0, errno, "", quoteaf (filename));
+  if (unlikely (fclose (fp) != 0))
+    error (0, errno, "%s", quoteaf (filename));
 
   return 0;
 }

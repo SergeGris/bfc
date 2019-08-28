@@ -45,7 +45,7 @@ static const char getchar_body[] =
 "    popq    %%rax\n"
 "    movb    (buffer),%%cl\n"
 "    movb    %%cl,(%%rax)\n"
-"    retq\n"
+"    ret\n"
 "\n";
 
 static const char putchar_body[] =
@@ -66,7 +66,7 @@ static const char putchar_body[] =
 "    popq    %%rsi\n"
 "    popq    %%rdi\n"
 "    popq    %%rax\n"
-"    retq\n"
+"    ret\n"
 "\n";
 
 static const char start_begin_and_init_array[] =
@@ -103,9 +103,9 @@ static const char label_end[] =
 "    jne     .LB%d\n";
 
 static const char call_getchar[] =
-"    callq   getchar\n";
+"    call    getchar\n";
 static const char call_putchar[] =
-"    callq   putchar\n";
+"    call    putchar\n";
 
 int
 compile_to_obj (char *asm_filename, char *obj_filename)
