@@ -16,96 +16,96 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static const char init_variables[] =
-".section    .data\n"
+".section .data\n"
 "array:\n"
-"    .zero   %u\n"
+"        .zero       %u\n"
 "buffer:\n"
-"    .byte   0\n";
+"        .byte       0\n";
 
 static const char init_section_text[] =
-".section    .text\n"
-".globl      _start\n"
+".section .text\n"
+".globl _start\n"
 "\n";
 
 static const char getchar_body[] =
 ".type getchar,@function\n"
 "getchar:\n"
-"    pushl   %%eax\n"
-"    pushl   %%ebx\n"
-"    pushl   %%ecx\n"
-"    pushl   %%edx\n"
-"    movl    $3,%%eax\n"
-"    movl    $0,%%ebx\n"
-"    movl    $buffer,%%ecx\n"
-"    movl    $1,%%edx\n"
-"    int     $0x80\n"
-"    popl    %%edx\n"
-"    popl    %%ecx\n"
-"    popl    %%ebx\n"
-"    popl    %%eax\n"
-"    movb    (buffer),%%cl\n"
-"    movb    %%cl,(%%eax)\n"
-"    ret\n"
+"        pushl       %%eax\n"
+"        pushl       %%ebx\n"
+"        pushl       %%ecx\n"
+"        pushl       %%edx\n"
+"        movl        $3,%%eax\n"
+"        movl        $0,%%ebx\n"
+"        movl        $buffer,%%ecx\n"
+"        movl        $1,%%edx\n"
+"        int         $0x80\n"
+"        popl        %%edx\n"
+"        popl        %%ecx\n"
+"        popl        %%ebx\n"
+"        popl        %%eax\n"
+"        movb        (buffer),%%cl\n"
+"        movb        %%cl,(%%eax)\n"
+"        ret\n"
 "\n";
 
 static const char putchar_body[] =
 ".type getchar,@function\n"
 "putchar:\n"
-"    pushl   %%eax\n"
-"    pushl   %%ebx\n"
-"    pushl   %%ecx\n"
-"    pushl   %%edx\n"
-"    xorl    %%ebx,%%ebx\n"
-"    movb    (%%eax),%%bl\n"
-"    movb    %%bl,(buffer)\n"
-"    movl    $4,%%eax\n"
-"    movl    $1,%%ebx\n"
-"    movl    $buffer,%%ecx\n"
-"    movl    $1,%%edx\n"
-"    int     $0x80\n"
-"    popl    %%edx\n"
-"    popl    %%ecx\n"
-"    popl    %%ebx\n"
-"    popl    %%eax\n"
-"    ret\n"
+"        pushl       %%eax\n"
+"        pushl       %%ebx\n"
+"        pushl       %%ecx\n"
+"        pushl       %%edx\n"
+"        xorl        %%ebx,%%ebx\n"
+"        movb        (%%eax),%%bl\n"
+"        movb        %%bl,(buffer)\n"
+"        movl        $4,%%eax\n"
+"        movl        $1,%%ebx\n"
+"        movl        $buffer,%%ecx\n"
+"        movl        $1,%%edx\n"
+"        int         $0x80\n"
+"        popl        %%edx\n"
+"        popl        %%ecx\n"
+"        popl        %%ebx\n"
+"        popl        %%eax\n"
+"        ret\n"
 "\n";
 
 static const char start_begin_and_init_array[] =
 ".type _start,@function\n"
 "_start:\n"
-"    movl    $array,%%eax\n";
+"        movl        $array,%%eax\n";
 
 static const char start_end[] =
 "\n"
-"    movl    $1,%%eax\n"
-"    xorl    %%ebx,%%ebx\n"
-"    int     $0x80\n";
+"        movl        $1,%%eax\n"
+"        xorl        %%ebx,%%ebx\n"
+"        int         $0x80\n";
 static const char increment_current_value[] =
-"    movb    $%d,%%bl\n"
-"    addb    %%bl,(%%eax)\n";
+"        movb        $%i,%%bl\n"
+"        addb        %%bl,(%%eax)\n";
 static const char decrement_current_value[] =
-"    movb    $%d,%%bl\n"
-"    subb    %%bl,(%%eax)\n";
+"        movb        $%i,%%bl\n"
+"        subb        %%bl,(%%eax)\n";
 static const char increment_current_pointer[] =
-"    addl    $%d,%%eax\n";
+"        addl        $%i,%%eax\n";
 static const char decrement_current_pointer[] =
-"    subl    $%d,%%eax\n";
+"        subl        $%i,%%eax\n";
 
 static const char label_begin[] =
 "\n"
 ".LB%d:\n"
-"    cmpb    $0,(%%eax)\n"
-"    je      .LE%d\n";
+"        cmpb        $0,(%%eax)\n"
+"        je          .LE%i\n";
 static const char label_end[] =
 "\n"
 ".LE%d:\n"
-"    cmpb    $0,(%%eax)\n"
-"    jne     .LB%d\n";
+"        cmpb        $0,(%%eax)\n"
+"        jne         .LB%i\n";
 
 static const char call_getchar[] =
-"    call    getchar\n";
+"        call        getchar\n";
 static const char call_putchar[] =
-"    call    putchar\n";
+"        call        putchar\n";
 
 int
 compile_to_obj (char *asm_filename, char *obj_filename)
@@ -114,7 +114,7 @@ compile_to_obj (char *asm_filename, char *obj_filename)
 
   int err = exec (as);
   if (err != 0)
-    error (0, 0, _("error: as returned %d exit status"), err);
+    error (0, 0, _("error: as returned %i exit status"), err);
 
   return err;
 }

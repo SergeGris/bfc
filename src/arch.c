@@ -37,14 +37,17 @@ int
 exec (char **arg)
 {
   int status = -1;
-  pid_t pid  = vfork ();
+  pid_t pid  = fork ();
 
   if (pid < 0)
     /* Fork error.  */
     die (EXIT_FAILURE, errno, "%s", arg[0]);
   else if (pid == 0)
-    /* Child process.  */
-    execvp (arg[0], arg);
+    {
+      /* Child process.  */
+      execvp (arg[0], arg);
+      die (EXIT_FAILURE, errno, "%s", arg[0]);
+    }
   else /* pid > 0 */
     /* Parent process.  */
     wait (&status);
@@ -56,12 +59,8 @@ exec (char **arg)
 # include "arch/x86_64.c"
 #elif defined(__i386__)
 # include "arch/x86.c"
-#elif defined(__arm__)
-# include "arch/arm.c"
-#elif defined(__aarch64__)
-# include "arch/arm64.c"
-#elif defined(__m68k__)
-# include "arch/m68k.c"
+#else
+# error Unknown arch
 #endif
 
 int
@@ -87,7 +86,7 @@ tokens_to_asm (ProgramSource *const source,
 
   /* Convert tokens to machine code.  */
   int errorcode = 0;
-  for (size_t i = 0; i < source->length && errorcode == 0; ++i)
+  for (size_t i = 0; i < source->length && errorcode == 0; i++)
     {
       const Command current = source->tokens[i];
       switch (current.token)

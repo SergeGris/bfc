@@ -87,7 +87,7 @@ change_extension (char *filename, const char *new_extension)
 
   size_t len = strlen (filename);
 
-  for (char *tmp = filename + len - 1; tmp >= filename; --tmp)
+  for (char *tmp = filename + len - 1; tmp >= filename; tmp--)
     {
       if (*tmp == '.')
         {
@@ -109,12 +109,15 @@ change_extension (char *filename, const char *new_extension)
 static char *
 cut_path (char *str)
 {
+  if (*str == '\0')
+    return str;
+
   char *tmp = strchr (str, '\0');
 
-  while (tmp >= str && *tmp != '/')
-    --tmp;
+  while (tmp > str && *(tmp - 1) != '/')
+    tmp--;
 
-  return tmp + 1;
+  return tmp;
 }
 
 static bool do_assemble                = true;
@@ -165,7 +168,7 @@ diagnose_leading_hyphen (int argc, char **argv)
      for a file name that looks like an option.  */
 
   struct stat st;
-  for (int i = 1; i < argc; ++i)
+  for (int i = 1; i < argc; i++)
     {
       const char *arg = argv[i];
       if (arg[0] == '-' && strlen (arg) > 3 && lstat (arg, &st) == 0)
@@ -223,7 +226,7 @@ parseopt (int argc, char **argv)
 
   errno = 0;
   char **operand_lim = argv + argc;
-  for (char **operandp = argv + optind; operandp < operand_lim; ++operandp)
+  for (char **operandp = argv + optind; operandp < operand_lim; operandp++)
     {
       char *file = *operandp;
       struct stat st;
@@ -243,8 +246,8 @@ count_consecutive_X_s (const char *s, size_t len)
   size_t n = 0;
   while (len != 0 && s[len - 1] == 'X')
     {
-      ++n;
-      --len;
+      n++;
+      len--;
     }
   return n;
 }
@@ -278,7 +281,7 @@ mktmp (const char *template, size_t suff_len)
   return tmpfile;
 }
 
-void
+int
 compile_file (char *filename)
 {
   char *out_asm = NULL;
@@ -362,6 +365,8 @@ compile_file (char *filename)
   free (out_filename);
   free (out_obj);
   free (out_asm);
+
+  return err;
 }
 
 int
@@ -381,8 +386,10 @@ main (int argc, char **argv)
   argc -= optind;
   argv += optind;
 
-  for (int i = 0; i < argc; i++)
-    compile_file (argv[i]);
+  int err = 0;
 
-  return EXIT_SUCCESS;
+  for (int i = 0; i < argc; i++)
+    err += compile_file (argv[i]);
+
+  return err == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

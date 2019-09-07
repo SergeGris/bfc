@@ -77,10 +77,11 @@ write_file (const char *filename,
         error (0, errno, "%s", quoteaf (filename));
       return -1;
     }
-
   if (unlikely (fclose (fp) != 0))
-    error (0, errno, "%s", quoteaf (filename));
-
+    {
+      error (0, errno, "%s", quoteaf (filename));
+      return -1;
+    }
   return 0;
 }
 

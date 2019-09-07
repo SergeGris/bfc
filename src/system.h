@@ -155,8 +155,8 @@ select_plural (uintmax_t n)
 # define __builtin_expect(condition, expected_value) (condition)
 #endif
 
-#define   likely(condition) __builtin_expect (!!(condition), true)
-#define unlikely(condition) __builtin_expect (!!(condition), false)
+#define   likely(condition) __builtin_expect ((condition) != 0, true)
+#define unlikely(condition) __builtin_expect ((condition) != 0, false)
 
 /* Use a macro rather than an inline function, as this references
    the global program_name, which causes dynamic linking issues

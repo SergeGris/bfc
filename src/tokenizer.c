@@ -75,7 +75,7 @@ strip_comments (const char *const source)
   size_t size = strlen (source);
   char *result = xmalloc (size + 1);
   size_t j = 0;
-  for (size_t i = 0; i < size; ++i)
+  for (size_t i = 0; i < size; i++)
     if (parse_token (source[i]) != T_COMMENT)
       result[j++] = source[i];
   result[j] = '\0';
@@ -113,7 +113,7 @@ tokenize (const char *const source,
   Command command = { T_COMMENT, 0 };
 
   int errorcode = 0;
-  for (size_t i = 0; i < strlen (cleaned_source); ++i)
+  for (size_t i = 0; i < strlen (cleaned_source); i++)
     {
       char c_current = cleaned_source[i];
       char c_next = cleaned_source[i + 1];
@@ -131,14 +131,17 @@ tokenize (const char *const source,
         command.value += parse_value (c_current);
       else if (current == T_POINTER_INCDEC)
         {
+          /*
           const i32 value = parse_value (c_current);
           command.value += value;
+          */
+          command.value += parse_value (c_current);
         }
       else if (current == T_LABEL)
         command.value = opening_label_count++;
       else if (current == T_JUMP)
         {
-          ++closing_label_count;
+          closing_label_count++;
           if (closing_label_count > opening_label_count)
             {
               /* Error: Label mismatch.  */
@@ -149,10 +152,10 @@ tokenize (const char *const source,
           /* Traverse final result backwards to find the correct label.  */
           i32 correct_label = -1;
           ptrdiff_t open_labels_to_skip = 0;
-          for (size_t kk = result_len - 1;; --kk)
+          for (size_t kk = result_len - 1;; kk--)
             {
               if (result[kk].token == T_JUMP)
-                ++open_labels_to_skip;
+                open_labels_to_skip++;
               else if (result[kk].token == T_LABEL)
                 {
                   if (open_labels_to_skip-- == 0)
@@ -236,9 +239,9 @@ optimize (const Command *const tokens,
       const int max_passes = 10;
       bool finished = false;
       int inactive_loop_index = -1;
-      for (int round = 0; round < max_passes && !finished; ++round)
+      for (int round = 0; round < max_passes && !finished; round++)
         {
-          for (size_t i = 0; i < input_len; ++i)
+          for (size_t i = 0; i < input_len; i++)
             {
               const Command current = input_tokens[i];
               if (current.token == T_INCDEC || current.token == T_GETCHAR)
@@ -254,7 +257,7 @@ optimize (const Command *const tokens,
                 }
             }
           bool inside_loop = false;
-          for (size_t i = 0; i < input_len; ++i)
+          for (size_t i = 0; i < input_len; i++)
             {
               const Command current = input_tokens[i];
               if (current.token == T_LABEL && current.value == inactive_loop_index)
@@ -269,23 +272,23 @@ optimize (const Command *const tokens,
         }
 
       /* Find input and print commands.  */
-      bool found_input  = false,
-           found_output = false;
-      for (size_t i = 0; i < input_len; ++i)
+      bool found_getchar = false,
+           found_putchar = false;
+      for (size_t i = 0; i < input_len; i++)
         {
           const Command current = input_tokens[i];
 
           if (current.token == T_GETCHAR)
-            found_input = true;
+            found_getchar = true;
           else if (current.token == T_PUTCHAR)
-            found_output = true;
+            found_putchar = true;
 
-          if (found_input && found_output)
+          if (found_getchar && found_putchar)
             break;
         }
 
-      have_putchar_commands = found_output;
-      have_getchar_commands = found_input;
+      have_getchar_commands = found_getchar;
+      have_putchar_commands = found_putchar;
     }
 
   /* TODO: Level 2:
@@ -295,7 +298,7 @@ optimize (const Command *const tokens,
     {
       /* Error: Not implemented.  */
       err = 103;
-      error (0, 0, _("optimization level %d is not implemented"), level);
+      error (0, 0, _("optimization level %i is not implemented"), level);
 
       if (!have_putchar_commands && !have_getchar_commands)
         { }
@@ -308,15 +311,15 @@ optimize (const Command *const tokens,
     }
 
   size_t input_len_without_comments = input_len;
-  for (size_t i = 0; i < input_len; ++i)
+  for (size_t i = 0; i < input_len; i++)
     if (input_tokens[i].token == T_COMMENT)
-      --input_len_without_comments;
+      input_len_without_comments--;
 
   /* Compact result by stripping out comments.  */
   out_result->tokens = xmalloc (input_len_without_comments * sizeof (Command));
 
   size_t length = 0;
-  for (size_t i = 0; i < input_len; ++i)
+  for (size_t i = 0; i < input_len; i++)
     {
       if (input_tokens[i].token != T_COMMENT)
         out_result->tokens[length++] = input_tokens[i];
