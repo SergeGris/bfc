@@ -93,12 +93,12 @@ static const char decrement_current_pointer[] =
 
 static const char label_begin[] =
 "\n"
-".LB%d:\n"
+".LB%i:\n"
 "        cmpb        $0,(%%eax)\n"
 "        je          .LE%i\n";
 static const char label_end[] =
 "\n"
-".LE%d:\n"
+".LE%i:\n"
 "        cmpb        $0,(%%eax)\n"
 "        jne         .LB%i\n";
 
@@ -126,7 +126,7 @@ link_to_elf (char *obj_filename, char *elf_filename)
 
   int err = exec (ld);
   if (err != 0)
-    error (0, 0, _("error: ld returned %d exit status"), err);
+    error (0, 0, _("error: ld returned %i exit status"), err);
 
   return err;
 }

@@ -93,12 +93,12 @@ static const char decrement_current_pointer[] =
 
 static const char label_begin[] =
 "\n"
-".LB%d:\n"
+".LB%i:\n"
 "        cmpb        $0,(%%rax)\n"
 "        je          .LE%i\n";
 static const char label_end[] =
 "\n"
-".LE%d:\n"
+".LE%i:\n"
 "        cmpb        $0,(%%rax)\n"
 "        jne         .LB%i\n";
 
@@ -114,7 +114,7 @@ compile_to_obj (char *asm_filename, char *obj_filename)
 
   int err = exec (as);
   if (err != 0)
-    error (0, 0, _("error: as returned %d exit status"), err);
+    error (0, 0, _("error: as returned %i exit status"), err);
 
   return err;
 }
