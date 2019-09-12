@@ -63,11 +63,6 @@ gl_INIT
 
 AC_FUNC_FORK
 
-# As long as "grep 'PRI[diouxX]' po/*.pot" reports matches in
-# translatable strings, we must use need-formatstring-macros here.
-AM_GNU_GETTEXT([external], [need-formatstring-macros])
-AM_GNU_GETTEXT_VERSION([0.19.2])
-
 AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--disable-debug],[make compile release version directly]),
               [enable_debug=${enableval}],[enable_debug=yes])

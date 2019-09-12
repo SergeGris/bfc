@@ -110,7 +110,7 @@ static const char call_putchar[] =
 int
 compile_to_obj (char *asm_filename, char *obj_filename)
 {
-  char *as[] = { "as", "--32", "-o", obj_filename, asm_filename, (char *) 0 };
+  char *as[] = { "as", "--32", "-o", obj_filename, asm_filename, (char *) NULL };
 
   int err = exec (as);
   if (err != 0)
@@ -122,7 +122,7 @@ compile_to_obj (char *asm_filename, char *obj_filename)
 int
 link_to_elf (char *obj_filename, char *elf_filename)
 {
-  char *ld[] = { "ld", "-melf_i386", "-O2", "--gc-sections", "--strip-all", "-o", elf_filename, obj_filename, (char *) 0 };
+  char *ld[] = { "ld", "-melf_i386", "-O2", "--gc-sections", "--strip-all", "-o", elf_filename, obj_filename, (char *) NULL };
 
   int err = exec (ld);
   if (err != 0)

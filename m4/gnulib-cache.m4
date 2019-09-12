@@ -61,7 +61,6 @@
 #  fopen \
 #  freopen \
 #  getopt-gnu \
-#  gettext-h \
 #  git-version-gen \
 #  gitlog-to-changelog \
 #  gnu-make \
@@ -134,7 +133,6 @@ gl_MODULES([
   fopen
   freopen
   getopt-gnu
-  gettext-h
   git-version-gen
   gitlog-to-changelog
   gnu-make
