@@ -171,7 +171,7 @@ select_plural (uintmax_t n)
   while (0)
 
 
-static inline char *
+static inline __attribute__ ((__const__)) char *
 bad_cast (const char *s)
 {
   return (char *) s;

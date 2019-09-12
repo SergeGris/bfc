@@ -36,7 +36,7 @@ str_append (char **str, const char *format, ...)
   /* This is only used to combine arguments,
      so fixed-size string should be safe to use.  */
   char formatted_str[512];
-  assert (unlikely (strlen (format) <= sizeof (formatted_str)));
+  assert (strlen (format) <= sizeof (formatted_str));
 
   va_list argp;
   va_start (argp, format);
@@ -46,11 +46,9 @@ str_append (char **str, const char *format, ...)
   va_end (argp);
 
   const size_t old_length = (*str == NULL || **str == '\0' ? 0 : strlen (*str));
-  char *new_str = xcalloc (old_length + strlen (formatted_str) + 1, sizeof (char));
+  char *new_str = xmalloc (old_length + strlen (formatted_str) + 1);
 
-  if (*str != NULL)
-    strcat (new_str, *str);
-  strcat (new_str, formatted_str);
+  sprintf ("%s%s", *str != NULL ? *str : "", formatted_str);
 
   free (*str);
   *str = new_str;

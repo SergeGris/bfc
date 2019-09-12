@@ -55,10 +55,10 @@ exec (char **arg)
   return status;
 }
 
-#if defined(__amd64__) || defined(__x86_64__) || defined(_AMD64_)
-# include "arch/x86_64.c"
+#if defined(__x86_64__)
+# include "x86_64.c"
 #elif defined(__i386__)
-# include "arch/x86.c"
+# include "i386.c"
 #else
 # error Unknown arch
 #endif
