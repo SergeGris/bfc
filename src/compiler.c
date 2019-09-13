@@ -61,26 +61,27 @@ write_file (const char *filename,
             const char *source,
             const size_t source_length)
 {
-  FILE *fp = fopen (filename, "w");
-  if (unlikely (fp == NULL))
+  FILE *fp;
+  if ((fp = fopen (filename, "w")) == NULL)
+    goto lfail;
+  if (fwrite (source, sizeof (char), source_length, fp) != source_length)
+    goto lfail;
+  if (fclose (fp) != 0)
     {
-      error (0, errno, "%s", quoteaf (filename));
-      return -1;
+      fp = NULL;
+      goto lfail;
     }
-  size_t result = fwrite (source, sizeof (char), source_length, fp);
-  if (unlikely (result != source_length))
-    {
-      error (0, errno, "%s", quoteaf (filename));
-      if (fclose (fp) != 0)
-        error (0, errno, "%s", quoteaf (filename));
-      return -1;
-    }
-  if (unlikely (fclose (fp) != 0))
-    {
-      error (0, errno, "%s", quoteaf (filename));
-      return -1;
-    }
+
   return 0;
+
+lfail:
+  error (0, errno, "%s", quoteaf (filename));
+
+  if (fp != NULL)
+    if (fclose (fp) != 0)
+      error (0, errno, "%s", quoteaf (filename));
+
+  return -1;
 }
 
 int

@@ -44,7 +44,7 @@ RELEASE_YEAR = \
     $(top_srcdir)/lib/version-etc.c`
 
 src_bfc_LDADD   = $(LDADD)
-src_bfc_SOURCES = src/main.c src/compiler.c src/tokenizer.c src/arch.c
+src_bfc_SOURCES = src/main.c src/compiler.c src/tokenizer.c src/optimizer.c src/arch.c
 
 BUILT_SOURCES += src/version.c
 src/version.c: Makefile

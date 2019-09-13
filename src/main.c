@@ -33,6 +33,7 @@
 #include "arch.h"
 #include "compiler.h"
 #include "tokenizer.h"
+#include "optimizer.h"
 
 #include "configmake.h"
 #include "die.h"
@@ -171,7 +172,7 @@ diagnose_leading_hyphen (int argc, char **argv)
   for (int i = 1; i < argc; i++)
     {
       const char *arg = argv[i];
-      if (arg[0] == '-' && strlen (arg) > 3 && lstat (arg, &st) == 0)
+      if (arg[0] == '-' && arg[1] != '\0' && lstat (arg, &st) == 0)
         {
           fprintf (stderr,
                    _("Try '%s ./%s' to get a compile the file %s.\n"),
@@ -257,7 +258,7 @@ mktemp_len (char *tmpl, size_t suff_len, size_t x_len, bool create)
   return gen_tempname_len (tmpl, suff_len, 0, create ? GT_FILE : GT_NOCREATE, x_len);
 }
 
-char *
+static char *
 mktmp (const char *template, size_t suff_len)
 {
   char *env = getenv ("TMPDIR");
@@ -281,7 +282,7 @@ mktmp (const char *template, size_t suff_len)
   return tmpfile;
 }
 
-int
+static int
 compile_file (char *filename)
 {
   char *out_asm = NULL;

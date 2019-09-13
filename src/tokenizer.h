@@ -69,15 +69,4 @@ extern int tokenize (const char *const source,
                      size_t *out_result_len)
   __attribute__ ((__nonnull__ (1, 2, 3)));
 
-extern int optimize (const Command *const tokens,
-                     const size_t tokens_len,
-                     ProgramSource *out_result,
-                     const unsigned int level)
-  __attribute__ ((__nonnull__ (1, 3)));
-
-extern int tokenize_and_optimize (const char *const source,
-                                  ProgramSource *out_result,
-                                  const unsigned int level)
-  __attribute__ ((__nonnull__ (1, 2)));
-
 #endif /* _TOKENIZER_H */
