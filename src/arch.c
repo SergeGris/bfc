@@ -82,7 +82,7 @@ tokens_to_asm (ProgramSource *const source,
     str_append (&output, putchar_body);
 
   /* Execution starts at this point.  */
-  str_append (&output, start_begin_and_init_array);
+  str_append (&output, start_init);
 
   /* Convert tokens to machine code.  */
   int errorcode = 0;
@@ -146,7 +146,7 @@ tokens_to_asm (ProgramSource *const source,
 
   /* Write quit commands.  */
   if (errorcode == 0)
-    str_append (&output, start_end);
+    str_append (&output, start_fini);
   else
     {
       free (output);

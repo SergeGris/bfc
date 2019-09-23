@@ -62,19 +62,11 @@ write_file (const char *filename,
             const size_t source_length)
 {
   FILE *fp;
-  if ((fp = fopen (filename, "w")) == NULL)
-    goto lfail;
-  if (fwrite (source, sizeof (char), source_length, fp) != source_length)
-    goto lfail;
-  if (fclose (fp) != 0)
-    {
-      fp = NULL;
-      goto lfail;
-    }
+  if ((fp = fopen (filename, "w")) != NULL
+      && fwrite (source, sizeof (char), source_length, fp) == source_length
+      && fclose (fp) == 0 ? true : (fp = NULL, false))
+    return 0;
 
-  return 0;
-
-lfail:
   error (0, errno, "%s", quoteaf (filename));
 
   if (fp != NULL)

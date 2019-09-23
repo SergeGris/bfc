@@ -57,12 +57,12 @@ static const char putchar_body[] =
 "        ret\n"
 "\n";
 
-static const char start_begin_and_init_array[] =
+static const char start_init[] =
 ".type _start,@function\n"
 "_start:\n"
 "        movq        $array,%%rax\n";
 
-static const char start_end[] =
+static const char start_fini[] =
 "\n"
 "        movq        $60,%%rax\n"
 "        xorq        %%rdi,%%rdi\n"

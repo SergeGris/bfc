@@ -149,9 +149,8 @@ select_plural (uintmax_t n)
 
 
 /* __builtin_expect(CONDITION, EXPECTED_VALUE) evaluates to CONDITION, but notifies the compiler that
-   the most likely value of CONDITION is EXPECTED_VALUE.  This feature was added at some point
-   between 2.95 and 3.0.  Let's use 3.0 as the lower bound for now.  */
-#if (__GNUC__ < 3) && !defined(__builtin_expect)
+   the most likely value of CONDITION is EXPECTED_VALUE.  */
+#if (!defined(__GNUC__) || (__GNUC__ <= 2 && __GNUC_MINOR__ < 96)) && !defined(__builtin_expect)
 # define __builtin_expect(condition, expected_value) (condition)
 #endif
 

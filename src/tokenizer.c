@@ -79,7 +79,7 @@ strip_comments (const char *const source)
     if (parse_token (source[i]) != T_COMMENT)
       result[j++] = source[i];
   result[j] = '\0';
-  return result;
+  return xrealloc (result, j);
 }
 
 static void
@@ -107,7 +107,7 @@ tokenize (const char *const source,
   *out_result_len = 0;
   *out_result = NULL;
   size_t result_len = 0;
-  Command *result = xmalloc (strlen (cleaned_source) * sizeof (Command));
+  Command *result = xmalloc (strlen (cleaned_source) * sizeof (*result));
 
   /* Command that is currently being constructed.  */
   Command command = { T_COMMENT, 0 };

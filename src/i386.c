@@ -1,4 +1,4 @@
-/*  x86.c
+/*  i386.c
     Copyright (C) 2019 Sergey Sushilin
     This file is part of the BrainFuck Compiler
 
@@ -58,12 +58,12 @@ static const char putchar_body[] =
 "        ret\n"
 "\n";
 
-static const char start_begin_and_init_array[] =
+static const char start_init[] =
 ".type _start,@function\n"
 "_start:\n"
 "        movl        $array,%%eax\n";
 
-static const char start_end[] =
+static const char start_fini[] =
 "\n"
 "        movl        $1,%%eax\n"
 "        xorl        %%ebx,%%ebx\n"
