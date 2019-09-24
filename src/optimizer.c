@@ -63,7 +63,7 @@ optimize (const Command *const tokens,
               const Command current = input_tokens[i];
               if (current.token == T_INCDEC || current.token == T_GETCHAR)
                 {
-                  /* Not inactive */
+                  /* Not inactive.  */
                   finished = true;
                   break;
                 }
@@ -137,10 +137,9 @@ optimize (const Command *const tokens,
 
   size_t length = 0;
   for (size_t i = 0; i < input_len; i++)
-    {
-      if (input_tokens[i].token != T_COMMENT)
-        out_result->tokens[length++] = input_tokens[i];
-    }
+    if (input_tokens[i].token != T_COMMENT)
+      out_result->tokens[length++] = input_tokens[i];
+
 
   out_result->length = length;
   out_result->have_putchar_commands = have_putchar_commands;

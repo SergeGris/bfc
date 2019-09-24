@@ -98,7 +98,7 @@ static const char call_putchar[] =
 int
 compile_to_obj (char *asm_filename, char *obj_filename)
 {
-  char *as[] = { "as", "--32", "-o", obj_filename, asm_filename, (char *) NULL };
+  char *as[] = { "as", "-O2", "--32", "-o", obj_filename, asm_filename, (char *) NULL };
 
   int err = exec (as);
   if (err != 0)
