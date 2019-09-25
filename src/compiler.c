@@ -27,7 +27,6 @@
 #include "system.h"
 
 #include "arch.h"
-
 #include "xalloc.h"
 
 int
