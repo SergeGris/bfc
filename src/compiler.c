@@ -45,12 +45,8 @@ str_append (char **str, const char *format, ...)
   va_end (argp);
 
   const size_t old_length = (*str == NULL || **str == '\0' ? 0 : strlen (*str));
-  char *new_str = xmalloc (old_length + strlen (formatted_str) + 1);
-
-  sprintf (new_str, "%s%s", *str != NULL ? *str : "", formatted_str);
-
-  free (*str);
-  *str = new_str;
+  *str = xrealloc (*str, old_length + strlen (formatted_str) + 1);
+  strcpy (*str + old_length, formatted_str);
 
   return err >= 0 ? 0 : -1;
 }
