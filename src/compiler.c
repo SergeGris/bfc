@@ -62,11 +62,11 @@ write_file (const char *filename,
       && fclose (fp) == 0 ? true : (fp = NULL, false))
     return 0;
 
-  error (0, errno, "%s", quoteaf (filename));
+  error (0, errno, "%s", quotef (filename));
 
   if (fp != NULL)
     if (fclose (fp) != 0)
-      error (0, errno, "%s", quoteaf (filename));
+      error (0, errno, "%s", quotef (filename));
 
   return -1;
 }

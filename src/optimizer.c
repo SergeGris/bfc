@@ -140,7 +140,6 @@ optimize (const Command *const tokens,
     if (input_tokens[i].token != T_COMMENT)
       out_result->tokens[length++] = input_tokens[i];
 
-
   out_result->length = length;
   out_result->have_putchar_commands = have_putchar_commands;
   out_result->have_getchar_commands = have_getchar_commands;

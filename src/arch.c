@@ -21,9 +21,9 @@
 
 #include <assert.h>
 #include <error.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>

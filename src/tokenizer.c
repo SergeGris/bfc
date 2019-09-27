@@ -21,9 +21,9 @@
 
 #include <error.h>
 #include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "system.h"
 
@@ -156,13 +156,10 @@ tokenize (const char *const source,
             {
               if (result[kk].token == T_JUMP)
                 open_labels_to_skip++;
-              else if (result[kk].token == T_LABEL)
+              else if (result[kk].token == T_LABEL && open_labels_to_skip-- == 0)
                 {
-                  if (open_labels_to_skip-- == 0)
-                    {
-                      correct_label = result[kk].value;
-                      break;
-                    }
+                  correct_label = result[kk].value;
+                  break;
                 }
 
               if (kk == 0)

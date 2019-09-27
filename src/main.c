@@ -17,16 +17,16 @@
 
 #include <config.h>
 
+#include <getopt.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 #include <locale.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <getopt.h>
 
 #include "system.h"
 
@@ -53,28 +53,29 @@
 static char *
 read_file (const char *filename)
 {
-  char *buf = NULL;
-  long  len = 0L;
-  FILE *fp  = NULL;
+  char *buf  = NULL;
+  long  len  = 0L;
+  FILE *fp   = NULL;
+  size_t res = 0;
 
-  if ((fp = fopen (filename, "r")) == NULL
-    || fseek (fp, 0L, SEEK_END) < 0
-    || (len = ftell (fp))       < 0
-    || fseek (fp, 0L, SEEK_SET) < 0)
-    goto lfail;
+  if ((fp = fopen (filename, "r")) != NULL
+      && fseek (fp, 0L, SEEK_END) >= 0
+      && (len = ftell (fp))       >= 0
+      && fseek (fp, 0L, SEEK_SET) >= 0
+      && (res = fread ((buf = xmalloc (len + 1)),
+                       sizeof (char), len, fp)) == len
+      && fclose (fp) == 0 ? true : (fp = NULL, false))
+    {
+      buf[len] = '\0';
+      return buf;
+    }
 
-  buf = xmalloc (len + 1);
-  size_t res = fread (buf, sizeof (char), len, fp);
-  if (res != len
-   || fclose (fp) != 0)
-    goto lfail;
-  buf[len] = '\0';
-  return buf;
-
-lfail:
   error (0, errno, "%s", quotef (filename));
   if (buf != NULL)
     free (buf);
+  if (fp != NULL)
+    if (fclose (fp) != 0)
+      error (0, errno, "%s", quotef (filename));
   return NULL;
 }
 
@@ -234,7 +235,7 @@ parseopt (int argc, char **argv)
       if (stat (file, &st) == 0)
         files_to_compile++;
       else if (errno != 0)
-        die (EXIT_TROUBLE, errno, "%s", quoteaf (file));
+        die (EXIT_TROUBLE, errno, "%s", quotef (file));
     }
 
   if (files_to_compile == 0)
@@ -268,16 +269,16 @@ mktmp (const char *template, size_t suff_len)
 
   char *x_suff = strchr (template, 'X');
   if (x_suff == NULL)
-    die (EXIT_TROUBLE, 0, _("invalid template %s, template must end by three or more X's"), quote (template));
+    die (EXIT_TROUBLE, 0, _("invalid template %s, template must end by three or more X's"), quoteaf (template));
 
   size_t x_len = count_consecutive_X_s (x_suff, strlen (x_suff) - suff_len);
   if (x_len < 3)
-    die (EXIT_TROUBLE, 0, _("too few X's in template %s, template must end by three or more X's"), quote (template));
+    die (EXIT_TROUBLE, 0, _("too few X's in template %s, template must end by three or more X's"), quoteaf (template));
 
   int fd = mktemp_len (tmpfile, suff_len, x_len, true);
 
   if (fd < 0 || close (fd) != 0)
-    die (EXIT_FAILURE, errno, _("failed to create file via template %s"), quote (template));
+    die (EXIT_FAILURE, errno, _("failed to create file via template %s"), quoteaf (template));
 
   return tmpfile;
 }
