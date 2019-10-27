@@ -97,8 +97,8 @@ tokenize (const char *const source,
 {
   /* Count [ and ] commands. Difference should be 0 at the end of the program, so
      that all jumps have a matching label.  */
-  i32 opening_label_count = 0;
-  i32 closing_label_count = 0;
+  ssize_t opening_label_count = 0;
+  ssize_t closing_label_count = 0;
 
   /* Strip comments from the source.  */
   char *cleaned_source = strip_comments (source);
@@ -152,7 +152,7 @@ tokenize (const char *const source,
           /* Traverse final result backwards to find the correct label.  */
           i32 correct_label = -1;
           ptrdiff_t open_labels_to_skip = 0;
-          for (size_t kk = result_len - 1;; kk--)
+          for (size_t kk = result_len - 1; true; kk--)
             {
               if (result[kk].token == T_JUMP)
                 open_labels_to_skip++;

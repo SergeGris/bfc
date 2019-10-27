@@ -122,6 +122,7 @@ cut_path (char *str)
   return tmp;
 }
 
+static char *out_filename              = "";
 static bool do_assemble                = true;
 static bool do_link                    = true;
 static bool save_temps                 = false;
@@ -184,7 +185,7 @@ diagnose_leading_hyphen (int argc, char **argv)
     }
 }
 
-void
+static void
 parseopt (int argc, char **argv)
 {
   parse_long_options (argc, argv, PROGRAM_NAME, PACKAGE_NAME, Version, usage, AUTHORS,
@@ -195,11 +196,11 @@ parseopt (int argc, char **argv)
   while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) != -1)
     switch (optc)
       {
-        /*
       case 'o':
         out_filename = optarg;
-        break;*/
-
+        if (*optarg == '\0')
+          die (EXIT_TROUBLE, 0, _("output filename cannot be empty."));
+        break;
       case 'O':
         if (*optarg == '\0' || *(optarg + 1) != '\0' || (*optarg < '0' && *optarg > '9'))
           error (0, 0, _("invalid optimization level %s"), optarg);
@@ -240,6 +241,8 @@ parseopt (int argc, char **argv)
 
   if (files_to_compile == 0)
     die (EXIT_FAILURE, 0, _("fatal error: no input files."));
+  if (files_to_compile > 1 && *out_filename != '\0')
+    die (EXIT_FAILURE, 0, _("files to compile more than one and output filename set."));
 }
 
 static size_t
@@ -323,9 +326,14 @@ compile_file (char *filename)
       out_obj = mktmp ("bfc-XXXXXXXXXXXX.o", 2);
     }
 
-  char *out_filename = xmalloc (clean_filename_len + 1);
-  snprintf (out_filename, clean_filename_len + 1, "%s", clean_filename);
-  change_extension (out_filename, "");
+  bool out_filename_was_allocated = false;
+  if (*out_filename == '\0')
+    {
+      out_filename = xmalloc (clean_filename_len + 1);
+      snprintf (out_filename, clean_filename_len + 1, "%s", clean_filename);
+      change_extension (out_filename, "");
+      out_filename_was_allocated = true;
+    }
 
   ProgramSource tokenized_source;
 
@@ -360,11 +368,16 @@ compile_file (char *filename)
 
   if (!save_temps || err != 0)
     {
-      char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
-      exec (rm);
+      //char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
+      //exec (rm);
+      if (do_assemble)
+        unlink (out_asm);
+      if (do_link)
+        unlink (out_obj);
     }
 
-  free (out_filename);
+  if (out_filename_was_allocated)
+    free (out_filename);
   free (out_obj);
   free (out_asm);
 

@@ -43,8 +43,10 @@ RELEASE_YEAR = \
   `sed -n '/.*COPYRIGHT_YEAR = \([0-9][0-9][0-9][0-9]\) };/s//\1/p' \
     $(top_srcdir)/lib/version-etc.c`
 
-src_bfc_LDADD   = $(LDADD)
-src_bfc_SOURCES = src/main.c src/compiler.c src/tokenizer.c src/optimizer.c src/arch.c
+src_bfc_LDADD    = $(LDADD)
+src_bfc_SOURCES  = src/main.c src/compiler.c src/tokenizer.c src/optimizer.c src/arch.c
+src_bfc_CFLAGS   = $(AM_CFLAGS)
+src_bfc_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES += src/version.c
 src/version.c: Makefile

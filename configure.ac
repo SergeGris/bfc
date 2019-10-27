@@ -73,7 +73,12 @@ if test "x${enable_debug}" == "xyes"; then
 else
   AC_DEFINE([NDEBUG], 1, [debug version is disabled])
   CFLAGS="$CFLAGS -s -ffunction-sections -fno-asynchronous-unwind-tables"
-  LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
+  if test "x${LDFLAGS}" == "x"; then
+    LDFLAGS="-Wl,--gc-sections -Wl,--strip-all"
+  else
+    LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
+  fi
+LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
   AC_MSG_NOTICE([NOTE: all debug symbols will be removed])
 fi
 

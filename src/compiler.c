@@ -34,7 +34,7 @@ str_append (char **str, const char *format, ...)
 {
   /* This is only used to combine arguments,
      so fixed-size string should be safe to use.  */
-  char formatted_str[512];
+  char formatted_str[384];
   assert (strlen (format) <= sizeof (formatted_str));
 
   va_list argp;
@@ -63,10 +63,8 @@ write_file (const char *filename,
     return 0;
 
   error (0, errno, "%s", quotef (filename));
-
-  if (fp != NULL)
-    if (fclose (fp) != 0)
-      error (0, errno, "%s", quotef (filename));
+  if (fp != NULL && fclose (fp) != 0)
+    error (0, errno, "%s", quotef (filename));
 
   return -1;
 }

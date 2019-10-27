@@ -1,4 +1,3 @@
-
 /* xstrndup.c
 
    Copyright (C) 2019 Free Software Foundation, Inc.
