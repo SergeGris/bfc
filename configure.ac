@@ -67,7 +67,7 @@ AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--disable-debug],[make compile release version directly]),
               [enable_debug=${enableval}],[enable_debug=yes])
 
-if test "x${enable_debug}" == "xyes"; then
+if test "${enable_debug}" == "yes"; then
   AC_DEFINE([_DEBUG], 1, [debug version is enabled])
   CFLAGS="-Og -ggdb"
 else

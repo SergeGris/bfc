@@ -368,8 +368,6 @@ compile_file (char *filename)
 
   if (!save_temps || err != 0)
     {
-      //char *rm[] = { "rm", "-f", do_assemble ? out_asm : (char *) NULL, do_link ? out_obj : (char *) NULL, (char *) NULL };
-      //exec (rm);
       if (do_assemble)
         unlink (out_asm);
       if (do_link)

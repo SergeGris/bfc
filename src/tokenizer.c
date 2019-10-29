@@ -97,8 +97,8 @@ tokenize (const char *const source,
 {
   /* Count [ and ] commands. Difference should be 0 at the end of the program, so
      that all jumps have a matching label.  */
-  ssize_t opening_label_count = 0;
-  ssize_t closing_label_count = 0;
+  size_t opening_label_count = 0;
+  size_t closing_label_count = 0;
 
   /* Strip comments from the source.  */
   char *cleaned_source = strip_comments (source);
@@ -127,16 +127,8 @@ tokenize (const char *const source,
          Data increment and pointer increment are added to previous symbol.
          Labels and jumps need a number.
          Read and print need nothing.  */
-      if (current == T_INCDEC)
+      if (current == T_INCDEC || current == T_POINTER_INCDEC)
         command.value += parse_value (c_current);
-      else if (current == T_POINTER_INCDEC)
-        {
-          /*
-          const i32 value = parse_value (c_current);
-          command.value += value;
-          */
-          command.value += parse_value (c_current);
-        }
       else if (current == T_LABEL)
         command.value = opening_label_count++;
       else if (current == T_JUMP)
@@ -152,7 +144,9 @@ tokenize (const char *const source,
           /* Traverse final result backwards to find the correct label.  */
           i32 correct_label = -1;
           ptrdiff_t open_labels_to_skip = 0;
-          for (size_t kk = result_len - 1; true; kk--)
+
+          size_t kk = result_len - 1;
+          do
             {
               if (result[kk].token == T_JUMP)
                 open_labels_to_skip++;
@@ -161,10 +155,9 @@ tokenize (const char *const source,
                   correct_label = result[kk].value;
                   break;
                 }
-
-              if (kk == 0)
-                break;
             }
+          while (kk-- != 0);
+
           if (correct_label < 0)
             {
               errorcode = 102;
@@ -188,8 +181,8 @@ tokenize (const char *const source,
       if (opening_label_count != closing_label_count)
         {
           /* Error: Label mismatch.  */
-         errorcode = 102;
-         error (0, 0, _("label mismatch"));
+          errorcode = 102;
+          error (0, 0, _("label mismatch"));
         }
     }
   else

@@ -19,10 +19,15 @@
 
 #include <config.h>
 
+#include <string.h>
+
 #include <xalloc.h>
 
 char *
-xstrndup (const char *string, size_t len)
+xstrndup (const char *string, size_t n)
 {
-  return xmemdup (string, len);
+  size_t len = strnlen (string, n);
+  char *ret = xmemdup (string, len + 1);
+  ret[len] = '\0';
+  return ret;
 }
