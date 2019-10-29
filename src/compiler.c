@@ -30,7 +30,7 @@
 #include "xalloc.h"
 
 int
-str_append (char **str, const char *format, ...)
+str_append (char **str, size_t *length, const char *format, ...)
 {
   /* This is only used to combine arguments,
      so fixed-size string should be safe to use.  */
@@ -39,14 +39,13 @@ str_append (char **str, const char *format, ...)
 
   va_list argp;
   va_start (argp, format);
-
   int err = vsprintf (formatted_str, format, argp);
-
   va_end (argp);
 
-  const size_t old_length = (*str == NULL || **str == '\0' ? 0 : strlen (*str));
-  *str = xrealloc (*str, old_length + strlen (formatted_str) + 1);
-  strcpy (*str + old_length, formatted_str);
+  size_t formatted_str_len = strlen (formatted_str);
+  *str = xrealloc (*str, *length + formatted_str_len + 1);
+  strcpy (*str + *length, formatted_str);
+  *length += formatted_str_len;
 
   return err >= 0 ? 0 : -1;
 }

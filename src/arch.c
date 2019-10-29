@@ -71,18 +71,19 @@ tokens_to_asm (ProgramSource *const source,
   *final_output = NULL;
   *final_output_length = 0;
   char *output = NULL;
+  size_t output_length = 0;
 
-  str_append (&output, init_variables, DATA_ARRAY_SIZE);
-  str_append (&output, init_section_text);
+  str_append (&output, &output_length, init_variables, DATA_ARRAY_SIZE);
+  str_append (&output, &output_length, init_section_text);
 
   /* Subroutines for I/O.  */
   if (source->have_getchar_commands)
-    str_append (&output, getchar_body);
+    str_append (&output, &output_length, getchar_body);
   if (source->have_putchar_commands)
-    str_append (&output, putchar_body);
+    str_append (&output, &output_length, putchar_body);
 
   /* Execution starts at this point.  */
-  str_append (&output, start_init);
+  str_append (&output, &output_length, start_init);
 
   /* Convert tokens to machine code.  */
   int errorcode = 0;
@@ -93,9 +94,9 @@ tokens_to_asm (ProgramSource *const source,
         {
         case T_INCDEC:
           if (current.value > 0)
-            str_append (&output, increment_current_value, +current.value & 0xFF);
+            str_append (&output, &output_length, increment_current_value, +current.value & 0xFF);
           else if (current.value < 0)
-            str_append (&output, decrement_current_value, -current.value & 0xFF);
+            str_append (&output, &output_length, decrement_current_value, -current.value & 0xFF);
           else
             {
               /* Command has no effect.  */
@@ -105,9 +106,9 @@ tokens_to_asm (ProgramSource *const source,
 
         case T_POINTER_INCDEC:
           if (current.value > 0)
-            str_append (&output, increment_current_pointer, +current.value);
+            str_append (&output, &output_length, increment_current_pointer, +current.value);
           else if (current.value < 0)
-            str_append (&output, decrement_current_pointer, -current.value);
+            str_append (&output, &output_length, decrement_current_pointer, -current.value);
           else
             {
               /* Command has no effect.  */
@@ -116,10 +117,10 @@ tokens_to_asm (ProgramSource *const source,
           break;
 
         case T_LABEL:
-          str_append (&output, label_begin, current.value, current.value);
+          str_append (&output, &output_length, label_begin, current.value, current.value);
           break;
         case T_JUMP:
-          str_append (&output, label_end, current.value, current.value);
+          str_append (&output, &output_length, label_end, current.value, current.value);
           break;
 
         case T_GETCHAR:
@@ -127,7 +128,7 @@ tokens_to_asm (ProgramSource *const source,
             /* Error: Unexpected token.  */
             errorcode = 202;
           else
-            str_append (&output, call_getchar);
+            str_append (&output, &output_length, call_getchar);
           break;
 
         case T_PUTCHAR:
@@ -135,7 +136,7 @@ tokens_to_asm (ProgramSource *const source,
             /* Error: Unexpected token.  */
             errorcode = 202;
           else
-            str_append (&output, call_putchar);
+            str_append (&output, &output_length, call_putchar);
           break;
 
         case T_COMMENT:
@@ -146,7 +147,7 @@ tokens_to_asm (ProgramSource *const source,
 
   /* Write quit commands.  */
   if (errorcode == 0)
-    str_append (&output, start_fini);
+    str_append (&output, &output_length, start_fini);
   else
     {
       free (output);
@@ -154,7 +155,7 @@ tokens_to_asm (ProgramSource *const source,
     }
 
   *final_output = output;
-  *final_output_length = strlen (output);
+  *final_output_length = output_length;
 
   return 0;
 }

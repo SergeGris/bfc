@@ -16,7 +16,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-AM_CFLAGS = -Wall -Wextra -std=c99 -Werror -Wno-unused-parameter -Wno-sign-compare -fomit-frame-pointer -pipe $(WERROR_CFLAGS)
+AM_CFLAGS = -Wall -Wextra -std=c99 -Werror -Wno-unused-parameter -Wno-sign-compare -fomit-frame-pointer -fno-omit-frame-pointer -pipe $(WERROR_CFLAGS)
 
 bin_PROGRAMS = src/bfc
 
