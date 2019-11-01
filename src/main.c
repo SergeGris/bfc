@@ -73,9 +73,8 @@ read_file (const char *filename)
   error (0, errno, "%s", quotef (filename));
   if (buf != NULL)
     free (buf);
-  if (fp != NULL)
-    if (fclose (fp) != 0)
-      error (0, errno, "%s", quotef (filename));
+  if (fp != NULL && fclose (fp) != 0)
+    error (0, errno, "%s", quotef (filename));
   return NULL;
 }
 
@@ -193,7 +192,7 @@ parseopt (int argc, char **argv)
 
   int optc = -1;
 
-  while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) != -1)
+  while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) >= 0)
     switch (optc)
       {
       case 'o':

@@ -33,7 +33,7 @@
  */
 typedef enum
 {
-  T_COMMENT,
+  T_COMMENT = 0,
   T_INCDEC,
   T_POINTER_INCDEC,
   T_LABEL,
@@ -58,11 +58,6 @@ typedef struct
   bool have_getchar_commands;
   bool have_putchar_commands;
 } ProgramSource;
-
-extern Token parse_token (const char symbol);
-extern int parse_value (const char symbol);
-extern char *strip_comments (const char *const source)
-  __attribute__ ((__nonnull__ (1), __returns_nonnull__));
 
 extern int tokenize (const char *const source,
                      Command **out_result,

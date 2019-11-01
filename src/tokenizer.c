@@ -29,47 +29,42 @@
 
 #include "xalloc.h"
 
-Token
-parse_token (char symbol)
+verify (UINT8_MAX == 0377 && T_COMMENT == 0);
+
+static const Token token_table[0400] =
 {
-  switch (symbol)
-    {
-    case '+':
-    case '-':
-      return T_INCDEC;
-    case '<':
-    case '>':
-      return T_POINTER_INCDEC;
-    case '[':
-      return T_LABEL;
-    case ']':
-      return T_JUMP;
-    case ',':
-      return T_GETCHAR;
-    case '.':
-      return T_PUTCHAR;
-    default:
-      return T_COMMENT;
-    }
+  ['+'] = T_INCDEC,
+  ['-'] = T_INCDEC,
+  ['>'] = T_POINTER_INCDEC,
+  ['<'] = T_POINTER_INCDEC,
+  ['['] = T_LABEL,
+  [']'] = T_JUMP,
+  [','] = T_GETCHAR,
+  ['.'] = T_PUTCHAR
+};
+static inline Token
+parse_token (unsigned char symbol)
+{
+  return token_table[symbol];
 }
 
-int
-parse_value (char symbol)
+static const Token token_value_table[0400] =
 {
-  switch (symbol)
-    {
-    case '+':
-    case '>':
-      return +1;
-    case '-':
-    case '<':
-      return -1;
-    default:
-      return 0;
-    }
+  ['+'] = +1,
+  ['-'] = -1,
+  ['>'] = +1,
+  ['<'] = -1
+};
+static inline int
+parse_value (unsigned char symbol)
+{
+  return token_value_table[symbol];
 }
 
-char *
+static char *strip_comments (const char *const source)
+  __attribute__ ((__nonnull__ (1), __returns_nonnull__));
+
+static char *
 strip_comments (const char *const source)
 {
   size_t size = strlen (source);
@@ -104,10 +99,10 @@ tokenize (const char *const source,
   char *cleaned_source = strip_comments (source);
 
   /* Initialize final result */
-  *out_result_len = 0;
   *out_result = NULL;
-  size_t result_len = 0;
+  *out_result_len = 0;
   Command *result = xmalloc (strlen (cleaned_source) * sizeof (*result));
+  size_t result_len = 0;
 
   /* Command that is currently being constructed.  */
   Command command = { T_COMMENT, 0 };
