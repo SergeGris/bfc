@@ -50,17 +50,5 @@ MOSTLYCLEANDIRS =
 
 AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib -Isrc -I$(top_srcdir)/src
 
-#AM_CPPFLAGS += -pedantic -pedantic-errors -w -Wextra -Wall -Waggregate-return -Wc++-compat -Wcast-align -Wcast-qual \
--Wchar-subscripts -Wcomment -Wconversion -Wdisabled-optimization \
--Werror-implicit-function-declaration -Wfatal-errors -Wfloat-equal -Wformat -Wformat=2 -Wformat-nonliteral -Wformat-security \
--Wformat-y2k -Wimplicit -Wimplicit-function-declaration -Wimplicit-int -Wimport -Winit-self -Winline \
--Winvalid-pch -Wunsafe-loop-optimizations -Wlong-long -Wmain -Wmissing-braces -Wmissing-field-initializers \
--Wmissing-format-attribute -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpadded -Wparentheses -Wpointer-arith \
--Wredundant-decls -Wreturn-type -Wsequence-point -Wshadow -Wsign-compare -Wstack-protector -Wstrict-aliasing \
--Wstrict-aliasing=2 -Wswitch -Wswitch-default -Wswitch-enum -Wsystem-headers -Wtrigraphs -Wundef -Wuninitialized -Wunknown-pragmas \
--Wunreachable-code -Wunused -Wunused-function -Wunused-label -Wunused-parameter -Wunused-value -Wunused-variable -Wvariadic-macros \
--Wvolatile-register-var -Wwrite-strings -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition \
--Wstrict-prototypes -Wtraditional -Wdeclaration-after-statement -Wpointer-sign
-
 include $(top_srcdir)/lib/local.mk
 include $(top_srcdir)/src/local.mk

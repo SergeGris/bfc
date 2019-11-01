@@ -73,12 +73,13 @@ if test "${enable_debug}" == "yes"; then
 else
   AC_DEFINE([NDEBUG], 1, [debug version is disabled])
   CFLAGS="$CFLAGS -s -ffunction-sections -fno-asynchronous-unwind-tables"
+  CFLAGS="$CFLAGS -s -finline -finline-atomics -finline-functions -finline-functions-called-once -finline-small-functions"
+
   if test "x${LDFLAGS}" == "x"; then
     LDFLAGS="-Wl,--gc-sections -Wl,--strip-all"
   else
     LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
   fi
-LDFLAGS="$LDFLAGS -Wl,--gc-sections -Wl,--strip-all"
   AC_MSG_NOTICE([NOTE: all debug symbols will be removed])
 fi
 

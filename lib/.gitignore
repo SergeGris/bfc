@@ -2,7 +2,6 @@
 /alloca.c
 /alloca.in.h
 /arg-nonnull.h
-/atexit.c
 /basename-lgpl.c
 /btowc.c
 /c++defs.h
@@ -247,3 +246,4 @@
 /pipe-safer.c
 /xstrndup.c
 /xstrndup.h
+/atexit.c

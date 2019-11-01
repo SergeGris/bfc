@@ -37,7 +37,6 @@
 /alloca.m4
 /arpa_inet_h.m4
 /assert.m4
-/atexit.m4
 /btowc.m4
 /builtin-expect.m4
 /calloc.m4
@@ -217,3 +216,4 @@
 /pthread-thread.m4
 /pthread_h.m4
 /sched_h.m4
+/atexit.m4
