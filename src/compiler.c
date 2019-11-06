@@ -27,9 +27,10 @@
 #include "system.h"
 
 #include "arch.h"
+#include "die.h"
 #include "xalloc.h"
 
-int
+void
 str_append (char **str, size_t *length, const char *format, ...)
 {
   /* This is only used to combine arguments,
@@ -42,12 +43,13 @@ str_append (char **str, size_t *length, const char *format, ...)
   int err = vsprintf (formatted_str, format, argp);
   va_end (argp);
 
+  if (err < 0)
+    die (EXIT_FAILURE, errno, "vsprintf");
+
   size_t formatted_str_len = strlen (formatted_str);
   *str = xrealloc (*str, *length + formatted_str_len + 1);
   strcpy (*str + *length, formatted_str);
   *length += formatted_str_len;
-
-  return err >= 0 ? 0 : -1;
 }
 
 static int
@@ -74,11 +76,8 @@ translate_to_asm (const char *filename,
 {
   char *instructions = NULL;
   size_t instructions_length = 0;
-  int err = tokens_to_asm (source, &instructions, &instructions_length);
-  if (err == 0)
-    {
-      err = write_file (filename, instructions, instructions_length);
-      free (instructions);
-    }
+  tokens_to_asm (source, &instructions, &instructions_length);
+  int err = write_file (filename, instructions, instructions_length);
+  free (instructions);
   return err;
 }

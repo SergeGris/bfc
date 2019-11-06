@@ -37,7 +37,7 @@ int
 exec (char **arg)
 {
   int status = -1;
-  pid_t pid  = fork ();
+  pid_t pid  = vfork ();
 
   if (pid < 0)
     /* Fork error.  */
@@ -63,7 +63,7 @@ exec (char **arg)
 # error Unknown arch
 #endif
 
-int
+void
 tokens_to_asm (ProgramSource *const source,
                char **final_output,
                size_t *final_output_length)
@@ -103,7 +103,6 @@ tokens_to_asm (ProgramSource *const source,
               ;
             }
           break;
-
         case T_POINTER_INCDEC:
           if (current.value > 0)
             str_append (&output, &output_length, increment_current_pointer, +current.value);
@@ -115,30 +114,18 @@ tokens_to_asm (ProgramSource *const source,
               ;
             }
           break;
-
         case T_LABEL:
           str_append (&output, &output_length, label_begin, current.value, current.value);
           break;
         case T_JUMP:
           str_append (&output, &output_length, label_end, current.value, current.value);
           break;
-
         case T_GETCHAR:
-          if (!source->have_getchar_commands)
-            /* Error: Unexpected token.  */
-            errorcode = 202;
-          else
-            str_append (&output, &output_length, call_getchar);
+          str_append (&output, &output_length, call_getchar);
           break;
-
         case T_PUTCHAR:
-          if (!source->have_putchar_commands)
-            /* Error: Unexpected token.  */
-            errorcode = 202;
-          else
-            str_append (&output, &output_length, call_putchar);
+          str_append (&output, &output_length, call_putchar);
           break;
-
         case T_COMMENT:
         default:
           break;
@@ -146,16 +133,8 @@ tokens_to_asm (ProgramSource *const source,
     }
 
   /* Write quit commands.  */
-  if (errorcode == 0)
-    str_append (&output, &output_length, start_fini);
-  else
-    {
-      free (output);
-      return errorcode;
-    }
+  str_append (&output, &output_length, start_fini);
 
   *final_output = output;
   *final_output_length = output_length;
-
-  return 0;
 }

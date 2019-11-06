@@ -46,7 +46,6 @@ static const char putchar_body[] =
 ".type getchar,@function\n"
 "putchar:\n"
 "        pushl       %%eax\n"
-"        xorl        %%ebx,%%ebx\n"
 "        movb        (%%eax),%%bl\n"
 "        movb        %%bl,(buffer)\n"
 "        movl        $4,%%eax\n"
@@ -98,7 +97,7 @@ static const char call_putchar[] =
 int
 compile_to_obj (char *asm_filename, char *obj_filename)
 {
-  char *as[] = { "as", "--32", "-o", obj_filename, asm_filename, (char *) NULL };
+  char *as[] = { "as", "-O2", "--32", "-o", obj_filename, asm_filename, (char *) NULL };
 
   int err = exec (as);
   if (err != 0)
