@@ -40,13 +40,11 @@ optimize (const Command *const tokens,
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
-  bool have_putchar_commands = true,
-       have_getchar_commands = true;
-
   /* Level 0:
-     Return code as is.
+     Return code as is.  Remove getchar and putchar bodies
+     if they are not used.  */
 
-     Level 1:
+  /* Level 1:
      Remove inactive loops (no +-, before the loop start)
      Check if there are no output commands
      Check if there are no input  commands.  */
@@ -61,13 +59,14 @@ optimize (const Command *const tokens,
           for (size_t i = 0; i < input_len; i++)
             {
               const Command current = input_tokens[i];
-              if (current.token == T_INCDEC || current.token == T_GETCHAR)
+              const u8 token = current.token;
+              if (token == T_INCDEC || token == T_GETCHAR)
                 {
                   /* Not inactive.  */
                   finished = true;
                   break;
                 }
-              else if (current.token == T_LABEL)
+              else if (token == T_LABEL)
                 {
                   inactive_loop_index = current.value;
                   break;
@@ -87,25 +86,6 @@ optimize (const Command *const tokens,
                 }
             }
         }
-
-      /* Find input and print commands.  */
-      bool found_getchar = false,
-           found_putchar = false;
-      for (size_t i = 0; i < input_len; i++)
-        {
-          const Command current = input_tokens[i];
-
-          if (current.token == T_GETCHAR)
-            found_getchar = true;
-          else if (current.token == T_PUTCHAR)
-            found_putchar = true;
-
-          if (found_getchar && found_putchar)
-            break;
-        }
-
-      have_getchar_commands = found_getchar;
-      have_putchar_commands = found_putchar;
     }
 
   /* TODO: Level 2:
@@ -116,9 +96,6 @@ optimize (const Command *const tokens,
       /* Error: Not implemented.  */
       err = 103;
       error (0, 0, _("optimization level %i is not implemented"), level);
-
-      if (!have_putchar_commands && !have_getchar_commands)
-        { }
     }
 
   if (err != 0)
@@ -134,11 +111,22 @@ optimize (const Command *const tokens,
 
   /* Compact result by stripping out comments.  */
   out_result->tokens = xmalloc (input_len_without_comments * sizeof (Command));
-
+  bool have_putchar_commands = false,
+       have_getchar_commands = false;
   size_t length = 0;
+
   for (size_t i = 0; i < input_len; i++)
-    if (input_tokens[i].token != T_COMMENT)
-      out_result->tokens[length++] = input_tokens[i];
+    {
+      const Command current = input_tokens[i];
+      if (current.token != T_COMMENT)
+        out_result->tokens[length++] = current;
+
+      u8 token = current.token;
+      if (token == T_GETCHAR)
+        have_getchar_commands = true;
+      else if (token == T_PUTCHAR)
+        have_putchar_commands = true;
+    }
 
   out_result->length = length;
   out_result->have_putchar_commands = have_putchar_commands;

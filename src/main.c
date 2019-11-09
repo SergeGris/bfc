@@ -17,6 +17,7 @@
 
 #include <config.h>
 
+#include <fcntl.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,13 +75,8 @@ read_file (const char *filename)
               buf += res;
               len -= res;
             }
-          while (res != 0 && !ferror (fp));
-          if (res != 0)
-            {
-              error (0, errno, "%s", quotef (filename));
-              return NULL;
-            }
-          if (fclose (fp) == 0)
+          while (len != 0 && !ferror (fp));
+          if (len == 0 && fclose (fp) == 0)
             return base_ptr;
         }
     }
@@ -96,24 +92,10 @@ change_extension (char *filename, const char *new_extension)
   if (unlikely (new_extension == NULL))
     return filename;
 
-  size_t len = strlen (filename);
-
-  for (char *tmp = filename + len - 1; tmp >= filename; tmp--)
-    {
-      if (*tmp == '.')
-        {
-          while ((*tmp++ = *new_extension++) != '\0')
-            ;
-          *tmp = '\0';
-          return filename;
-        }
-    }
-
-  char *tmp = filename + len;
-  while ((*tmp++ = *new_extension++) != '\0')
-    ;
-  *tmp = '\0';
-
+  char *tmp = strrchr (filename, '.');
+  if (tmp == NULL)
+    tmp = strchr (filename, '\0');
+  strcpy (tmp, new_extension);
   return filename;
 }
 
@@ -135,6 +117,7 @@ static char *out_filename              = "";
 static bool do_assemble                = true;
 static bool do_link                    = true;
 static bool save_temps                 = false;
+static bool with_debug_info            = false;
 static unsigned int optimization_level = 0;
 static unsigned int files_to_compile   = 0;
 
@@ -146,13 +129,14 @@ usage (int status)
   else
     {
       printf (_("\
-Usage: %s [-sco:O:]\n"), program_name);
+Usage: %s [-scgo:O:]\n"), program_name);
       puts (_("\
   --help                   Display this information and exit.\n\
   --version                Display compiler's version and exit.\n\
   --save-temps             Do not delete temporary files.\n\
   -s                       Compile only, do not assemble or link.\n\
   -c                       Compile and assemble, but do not link.\n\
+  -g                       Generate debug information.\n\
   -o <file>                Place the output into <file>.\n\
   -On                      Level of optimization, default is 0."));
     }
@@ -202,7 +186,7 @@ parseopt (int argc, char **argv)
 
   int optc = -1;
 
-  while ((optc = getopt_long (argc, argv, "o:O:cs", long_options, NULL)) >= 0)
+  while ((optc = getopt_long (argc, argv, "o:O:scg", long_options, NULL)) >= 0)
     switch (optc)
       {
       case 'o':
@@ -221,12 +205,15 @@ parseopt (int argc, char **argv)
             optimization_level = 1;
           }
         break;
+      case 's':
+        do_assemble = do_link = false;
+        break;
       case 'c':
         do_assemble = true;
         do_link = false;
         break;
-      case 's':
-        do_assemble = do_link = false;
+      case 'g':
+        with_debug_info = true;
         break;
       case SAVE_TEMPS_OPTION:
         save_temps = true;
@@ -309,24 +296,31 @@ compile_file (char *filename)
         {
           if (!do_assemble)
             {
-              out_asm = xstrndup (clean_filename, clean_filename_len - 1);
+              out_asm = xstrndup (clean_filename, clean_filename_len);
               change_extension (out_asm, ".s");
+
+              close (open (out_asm, O_WRONLY|O_CREAT|O_EXCL, 0600));
             }
           else
             {
               out_asm = mktmp ("bfc-XXXXXXXXXXXX.s", 2);
 
-              out_obj = xstrndup (clean_filename, clean_filename_len - 1);
+              out_obj = xstrndup (clean_filename, clean_filename_len);
               change_extension (out_obj, ".o");
+
+              close (open (out_obj, O_WRONLY|O_CREAT|O_EXCL, 0600));
             }
         }
       else
         {
-          out_asm = xstrndup (clean_filename, clean_filename_len - 1);
-          out_obj = xstrndup (clean_filename, clean_filename_len - 1);
+          out_asm = xstrndup (clean_filename, clean_filename_len);
+          out_obj = xstrndup (clean_filename, clean_filename_len);
 
           change_extension (clean_filename, ".s");
           change_extension (clean_filename, ".o");
+
+          close (open (out_asm, O_WRONLY|O_CREAT|O_EXCL, 0600));
+          close (open (out_obj, O_WRONLY|O_CREAT|O_EXCL, 0600));
         }
     }
   else
@@ -372,7 +366,7 @@ compile_file (char *filename)
       err = compile_to_obj (out_asm, out_obj);
 
       if (err == 0 && do_link)
-        err = link_to_elf (out_obj, out_filename);
+        err = link_to_elf (out_obj, out_filename, with_debug_info);
     }
 
   if (!save_temps || err != 0)

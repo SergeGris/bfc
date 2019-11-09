@@ -107,9 +107,17 @@ compile_to_obj (char *asm_filename, char *obj_filename)
 }
 
 int
-link_to_elf (char *obj_filename, char *elf_filename)
+link_to_elf (char *obj_filename, char *elf_filename, bool with_debug_info)
 {
-  char *ld[] = { "ld", "-melf_i386", "-O2", "--gc-sections", "--strip-all", "-o", elf_filename, obj_filename, (char *) NULL };
+  char *ld[] = { "ld", "-melf_i386", "-O2", "-o", elf_filename, obj_filename, (char *) 0, (char *) 0, (char *) 0 };
+
+  if (with_debug_info)
+    ld[countof (ld) - 2] = "--no-gc-sections";
+  else
+    {
+      ld[countof (ld) - 2] = "--gc-sections";
+      ld[countof (ld) - 1] = "--strip-all";
+    }
 
   int err = exec (ld);
   if (err != 0)

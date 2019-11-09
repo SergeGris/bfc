@@ -28,6 +28,6 @@ extern void tokens_to_asm (ProgramSource *const source,
                            size_t *final_output_length);
 extern int exec (char **arg);
 extern int compile_to_obj (char *asm_fn, char *obj_fn);
-extern int link_to_elf (char *obj_fn, char *elf_fn);
+extern int link_to_elf (char *obj_fn, char *elf_fn, bool with_debug_info);
 
 #endif /* _ARCH_H */

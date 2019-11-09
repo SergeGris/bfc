@@ -34,6 +34,9 @@
 typedef int8_t  i8;
 typedef int32_t i32;
 typedef int64_t i64;
+typedef uint8_t  u8;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 #include <errno.h>
 
@@ -146,6 +149,13 @@ select_plural (uintmax_t n)
 #  define FALLTHROUGH ((void) 0)
 # endif
 #endif /* FALLTHROUGH */
+
+
+/*
+ * countof - get the number of elements in array @arr
+ * @__arr: array to be sized
+ */
+#define countof(arr) (sizeof (arr) / sizeof ((arr)[0]))
 
 
 /* __builtin_expect(CONDITION, EXPECTED_VALUE) evaluates to CONDITION, but notifies the compiler that

@@ -27,6 +27,7 @@
 
 #include "system.h"
 
+#include "die.h"
 #include "xalloc.h"
 
 verify (UINT8_MAX == 0377 && T_COMMENT == 0);
@@ -73,6 +74,8 @@ strip_comments (const char *const source)
   for (size_t i = 0; i < size; i++)
     if (parse_token (source[i]) != T_COMMENT)
       result[j++] = source[i];
+  if (j == 0)
+    j = 1;
   result[j] = '\0';
   return xrealloc (result, j);
 }
