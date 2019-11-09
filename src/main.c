@@ -53,28 +53,38 @@
 static char *
 read_file (const char *filename)
 {
-  char *buf  = NULL;
-  long  len  = 0L;
-  FILE *fp   = NULL;
-  size_t res = 0;
+  char *buf      = NULL;
+  char *base_ptr = NULL;
+  ssize_t len    = 0;
+  FILE *fp       = NULL;
+  size_t res     = 0;
 
-  if ((fp = fopen (filename, "r")) != NULL
-      && fseek (fp, 0L, SEEK_END) >= 0
-      && (len = ftell (fp))       >= 0
-      && fseek (fp, 0L, SEEK_SET) >= 0
-      && (res = fread ((buf = xmalloc (len + 1)),
-                       sizeof (char), len, fp)) == len
-      && fclose (fp) == 0 ? true : (fp = NULL, false))
+  if ((fp = fopen (filename, "r")) != NULL)
     {
-      buf[len] = '\0';
-      return buf;
+      if (fseek (fp, 0L, SEEK_END)    >= 0
+          && (len = ftell (fp))       >= 0
+          && fseek (fp, 0L, SEEK_SET) >= 0)
+        {
+          buf = xmalloc (len + 1);
+          buf[len] = '\0';
+          base_ptr = buf;
+          do
+            {
+              res = fread (buf, sizeof (char), len, fp);
+              buf += res;
+              len -= res;
+            }
+          while (res != 0 && !ferror (fp));
+          if (res != 0)
+            {
+              error (0, errno, "%s", quotef (filename));
+              return NULL;
+            }
+          if (fclose (fp) == 0)
+            return base_ptr;
+        }
     }
-
   error (0, errno, "%s", quotef (filename));
-  if (buf != NULL)
-    free (buf);
-  if (fp != NULL && fclose (fp) != 0)
-    error (0, errno, "%s", quotef (filename));
   return NULL;
 }
 
