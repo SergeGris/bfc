@@ -33,11 +33,11 @@
 #include "compiler.h"
 #include "die.h"
 
-int
+static int
 exec (char **arg)
 {
   int status = -1;
-  pid_t pid  = vfork ();
+  pid_t pid  = fork ();
 
   if (pid < 0)
     /* Fork error.  */

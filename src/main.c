@@ -200,7 +200,7 @@ parseopt (int argc, char **argv)
         optimization_level = *optarg - '0';
         if (optimization_level > 1)
           {
-            /* Maximum optimization level is two, if after '-O' costs 2
+            /* Maximum optimization level is first, if after '-O' costs 2
                or greater number, then replace it by 1.  */
             optimization_level = 1;
           }
@@ -292,6 +292,9 @@ compile_file (char *filename)
 
   if (save_temps || !do_link)
     {
+      int fd;
+      int flags = O_WRONLY|O_CREAT|O_EXCL;
+      int mode = 0644;
       if (!save_temps)
         {
           if (!do_assemble)
@@ -299,7 +302,9 @@ compile_file (char *filename)
               out_asm = xstrndup (clean_filename, clean_filename_len);
               change_extension (out_asm, ".s");
 
-              close (open (out_asm, O_WRONLY|O_CREAT|O_EXCL, 0600));
+              fd = open (out_asm, flags, mode);
+              if (fd < 0 || close (fd) != 0)
+                die (EXIT_TROUBLE, errno, "%s", out_asm);
             }
           else
             {
@@ -308,7 +313,9 @@ compile_file (char *filename)
               out_obj = xstrndup (clean_filename, clean_filename_len);
               change_extension (out_obj, ".o");
 
-              close (open (out_obj, O_WRONLY|O_CREAT|O_EXCL, 0600));
+              fd = open (out_obj, flags, mode);
+              if (fd < 0 || close (fd) != 0)
+                die (EXIT_TROUBLE, errno, "%s", out_obj);
             }
         }
       else
@@ -319,8 +326,13 @@ compile_file (char *filename)
           change_extension (clean_filename, ".s");
           change_extension (clean_filename, ".o");
 
-          close (open (out_asm, O_WRONLY|O_CREAT|O_EXCL, 0600));
-          close (open (out_obj, O_WRONLY|O_CREAT|O_EXCL, 0600));
+          fd = open (out_asm, flags, mode);
+          if (fd < 0 || close (fd) != 0)
+            die (EXIT_TROUBLE, errno, "%s", out_asm);
+
+          fd = open (out_obj, flags, mode);
+          if (fd < 0 || close (fd) != 0)
+            die (EXIT_TROUBLE, errno, "%s", out_obj);
         }
     }
   else

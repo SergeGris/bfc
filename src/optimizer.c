@@ -110,9 +110,9 @@ optimize (const Command *const tokens,
       input_len_without_comments--;
 
   /* Compact result by stripping out comments.  */
-  out_result->tokens = xmalloc (input_len_without_comments * sizeof (Command));
-  bool have_putchar_commands = false,
-       have_getchar_commands = false;
+  out_result->tokens = xmalloc (input_len_without_comments * sizeof (*out_result->tokens));
+  bool have_putchar_commands = false;
+  bool have_getchar_commands = false;
   size_t length = 0;
 
   for (size_t i = 0; i < input_len; i++)
