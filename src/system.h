@@ -31,10 +31,12 @@
 #endif /* __attribute__ */
 
 #include <stdint.h>
-typedef int8_t  i8;
-typedef int32_t i32;
-typedef int64_t i64;
+typedef  int8_t  i8;
+typedef  int16_t i16;
+typedef  int32_t i32;
+typedef  int64_t i64;
 typedef uint8_t  u8;
+typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
@@ -150,13 +152,10 @@ select_plural (uintmax_t n)
 # endif
 #endif /* FALLTHROUGH */
 
+#define __same_type(a, b) __builtin_types_compatible_p (typeof (a), typeof (b))
 
-/*
- * countof - get the number of elements in array @arr
- * @__arr: array to be sized
- */
+/* Get the number of elements in array.  */
 #define countof(arr) (sizeof (arr) / sizeof ((arr)[0]))
-
 
 /* __builtin_expect(CONDITION, EXPECTED_VALUE) evaluates to CONDITION, but notifies the compiler that
    the most likely value of CONDITION is EXPECTED_VALUE.  */

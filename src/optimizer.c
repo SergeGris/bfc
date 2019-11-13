@@ -139,6 +139,7 @@ optimize (const Command *const tokens,
 
 int
 tokenize_and_optimize (const char *const source,
+                       const size_t source_len,
                        ProgramSource *out_result,
                        const unsigned int level)
 {
@@ -147,7 +148,7 @@ tokenize_and_optimize (const char *const source,
 
   Command *tokenized_source;
   size_t tokenized_source_length = 0;
-  int err = tokenize (source, &tokenized_source, &tokenized_source_length);
+  int err = tokenize (source, source_len, &tokenized_source, &tokenized_source_length);
   if (err != 0)
     return err;
 

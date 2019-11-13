@@ -19,6 +19,7 @@
 #define _TOKENIZER_H 1
 
 #include <stddef.h>
+#include <limits.h>
 
 #include "system.h"
 
@@ -60,8 +61,33 @@ typedef struct
 } ProgramSource;
 
 extern int tokenize (const char *const source,
+                     const size_t source_len,
                      Command **out_result,
                      size_t *out_result_len)
-  __attribute__ ((__nonnull__ (1, 2, 3)));
+  __nonnull ((1, 3, 4));
+
+verify (CHAR_BIT == 8 && T_COMMENT == 0);
+
+static const Token token_table[0400] =
+{
+  ['+'] = T_INCDEC,
+  ['-'] = T_INCDEC,
+  ['>'] = T_POINTER_INCDEC,
+  ['<'] = T_POINTER_INCDEC,
+  ['['] = T_LABEL,
+  [']'] = T_JUMP,
+  [','] = T_GETCHAR,
+  ['.'] = T_PUTCHAR
+};
+#define parse_token(symbol) (token_table[(unsigned char) symbol])
+
+static const Token token_value_table[0400] =
+{
+  ['+'] = +1,
+  ['-'] = -1,
+  ['>'] = +1,
+  ['<'] = -1
+};
+#define parse_value(symbol) (token_value_table[(unsigned char) symbol])
 
 #endif /* _TOKENIZER_H */

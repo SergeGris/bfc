@@ -51,37 +51,54 @@
 #define AUTHORS \
   proper_name ("Sergey Sushilin")
 
-static char *
-read_file (const char *filename)
+static inline __nonnull ((1)) void
+strip_comments (char **source, size_t length)
 {
-  char *buf      = NULL;
-  char *base_ptr = NULL;
-  ssize_t len    = 0;
-  FILE *fp       = NULL;
-  size_t res     = 0;
+  char *s = *source;
+  size_t j = 0;
+  for (size_t i = 0; i < length; i++)
+    if (parse_token (s[i]) != T_COMMENT)
+      s[j++] = s[i];
+  if (j == 0)
+    j = 1;
+  s[j] = '\0';
+  *source = &s[j];
+}
+
+static void
+read_file (const char *filename, char **content, size_t *content_len)
+{
+  FILE *fp = NULL;
 
   if ((fp = fopen (filename, "r")) != NULL)
     {
+      ssize_t len;
+
       if (fseek (fp, 0L, SEEK_END)    >= 0
           && (len = ftell (fp))       >= 0
           && fseek (fp, 0L, SEEK_SET) >= 0)
         {
-          buf = xmalloc (len + 1);
+          char *buf = xmalloc (len + 1);
           buf[len] = '\0';
-          base_ptr = buf;
+          char *s = buf;
           do
             {
-              res = fread (buf, sizeof (char), len, fp);
-              buf += res;
+              size_t res = fread (s, sizeof (char), len, fp);
+              /* Strip comments from the source.  */
+              strip_comments (&s, res);
               len -= res;
             }
           while (len != 0 && !ferror (fp));
           if (len == 0 && fclose (fp) == 0)
-            return base_ptr;
+            {
+              *content_len = s - buf;
+              *content = xrealloc (buf, s - buf);
+              return;
+            }
         }
     }
   error (0, errno, "%s", quotef (filename));
-  return NULL;
+  *content = NULL;
 }
 
 static const char *
@@ -353,12 +370,14 @@ compile_file (char *filename)
   ProgramSource tokenized_source;
 
   /* Open file.  */
-  char *source = read_file (filename);
+  char *source;
+  size_t source_len;
+  read_file (filename, &source, &source_len);
   if (source == NULL)
     die (EXIT_FAILURE, 0, _("fatal error: failed to read file %s"), quoteaf (filename));
 
   /* Interpret symbols.  */
-  int err = tokenize_and_optimize (source, &tokenized_source, optimization_level);
+  int err = tokenize_and_optimize (source, source_len, &tokenized_source, optimization_level);
   if (err != 0)
     {
       error (0, 0, _("error code: %i"), err);

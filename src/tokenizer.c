@@ -30,56 +30,6 @@
 #include "die.h"
 #include "xalloc.h"
 
-verify (UINT8_MAX == 0377 && T_COMMENT == 0);
-
-static const Token token_table[0400] =
-{
-  ['+'] = T_INCDEC,
-  ['-'] = T_INCDEC,
-  ['>'] = T_POINTER_INCDEC,
-  ['<'] = T_POINTER_INCDEC,
-  ['['] = T_LABEL,
-  [']'] = T_JUMP,
-  [','] = T_GETCHAR,
-  ['.'] = T_PUTCHAR
-};
-static inline Token
-parse_token (unsigned char symbol)
-{
-  return token_table[symbol];
-}
-
-static const Token token_value_table[0400] =
-{
-  ['+'] = +1,
-  ['-'] = -1,
-  ['>'] = +1,
-  ['<'] = -1
-};
-static inline int
-parse_value (unsigned char symbol)
-{
-  return token_value_table[symbol];
-}
-
-static char *strip_comments (const char *const source)
-  __attribute__ ((__nonnull__ (1), __returns_nonnull__));
-
-static char *
-strip_comments (const char *const source)
-{
-  size_t size = strlen (source);
-  char *result = xmalloc (size + 1);
-  size_t j = 0;
-  for (size_t i = 0; i < size; i++)
-    if (parse_token (source[i]) != T_COMMENT)
-      result[j++] = source[i];
-  if (j == 0)
-    j = 1;
-  result[j] = '\0';
-  return xrealloc (result, j);
-}
-
 static void
 append_to_array (const Command cmd,
                  Command **out_result,
@@ -90,6 +40,7 @@ append_to_array (const Command cmd,
 
 int
 tokenize (const char *const source,
+          size_t source_len,
           Command **out_result,
           size_t *out_result_len)
 {
@@ -98,23 +49,20 @@ tokenize (const char *const source,
   size_t opening_label_count = 0;
   size_t closing_label_count = 0;
 
-  /* Strip comments from the source.  */
-  char *cleaned_source = strip_comments (source);
-
   /* Initialize final result */
   *out_result = NULL;
   *out_result_len = 0;
-  Command *result = xmalloc (strlen (cleaned_source) * sizeof (*result));
+  Command *result = xmalloc (source_len * sizeof (*result));
   size_t result_len = 0;
 
   /* Command that is currently being constructed.  */
   Command command = { T_COMMENT, 0 };
 
   int errorcode = 0;
-  for (size_t i = 0; i < strlen (cleaned_source); i++)
+  for (size_t i = 0; i < source_len; i++)
     {
-      char c_current = cleaned_source[i];
-      char c_next = cleaned_source[i + 1];
+      unsigned char c_current = source[i];
+      unsigned char c_next = source[i + 1];
 
       Token current = parse_token (c_current);
       Token next = parse_token (c_next);
@@ -186,11 +134,8 @@ tokenize (const char *const source,
   else
     {
       free (result);
-      free (cleaned_source);
       return errorcode;
     }
-
-  free (cleaned_source);
 
   /* Copy allocated final result to the arguments.  */
   *out_result = result;

@@ -26,11 +26,12 @@ extern int optimize (const Command *const tokens,
                      const size_t tokens_len,
                      ProgramSource *out_result,
                      const unsigned int level)
-  __attribute__ ((__nonnull__ (1, 3)));
+  __nonnull ((1, 3));
 
 extern int tokenize_and_optimize (const char *const source,
+                                  const size_t source_len,
                                   ProgramSource *out_result,
                                   const unsigned int level)
-  __attribute__ ((__nonnull__ (1, 2)));
-  
+  __nonnull ((1, 3));
+
 #endif /* _OPTIMIZER_H */
