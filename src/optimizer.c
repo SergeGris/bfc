@@ -36,7 +36,7 @@ optimize (const Command *const tokens,
 {
   int err = 0;
 
-  Command *input_tokens = xmalloc (tokens_len * sizeof (Command));
+  Command *input_tokens = xmalloc (tokens_len * sizeof (*input_tokens));
   size_t input_len = tokens_len;
   memcpy (input_tokens, tokens, tokens_len * sizeof (Command));
 
@@ -53,13 +53,13 @@ optimize (const Command *const tokens,
       /* Remove inactive loops.  */
       const int max_passes = 10;
       bool finished = false;
-      int inactive_loop_index = -1;
+      i8 inactive_loop_index = -1;
       for (int round = 0; round < max_passes && !finished; round++)
         {
           for (size_t i = 0; i < input_len; i++)
             {
               const Command current = input_tokens[i];
-              const u8 token = current.token;
+              const Token token = current.token;
               if (token == T_INCDEC || token == T_GETCHAR)
                 {
                   /* Not inactive.  */

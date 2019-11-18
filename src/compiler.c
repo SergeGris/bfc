@@ -63,8 +63,8 @@ write_file (const char *filename,
   int fd;
   if ((fd = open (filename, O_WRONLY)) >= 0)
     {
-      char const *begin = source;
-      char const *const end = begin + source_length;
+      const char *begin = source;
+      const char *const end = begin + source_length;
 
       while (begin < end)
         {
@@ -77,10 +77,8 @@ write_file (const char *filename,
               continue; /* Let's send the remaining part of this message.  */
             }
           if (errno == EINTR)
-            {
-              /* It is just a signal, try again.  */
-              continue;
-            }
+            /* It is just a signal, try again.  */
+            continue;
           else
             {
               /* It is a real error.  */

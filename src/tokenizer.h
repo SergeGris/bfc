@@ -47,8 +47,8 @@ typedef enum
 /* Single Brainfuck command after parsing.  */
 typedef struct
 {
-  Token token;
-  i32 value;
+  Token token:3;
+  i8 value;
 } Command;
 
 /* Complete Brainfuck program after parsing and optimizing.  */
@@ -56,8 +56,8 @@ typedef struct
 {
   Command *tokens;
   size_t length;
-  bool have_getchar_commands;
-  bool have_putchar_commands;
+  bool have_getchar_commands:1;
+  bool have_putchar_commands:1;
 } ProgramSource;
 
 extern int tokenize (const char *const source,
@@ -81,7 +81,7 @@ static const Token token_table[0400] =
 };
 #define parse_token(symbol) (token_table[(unsigned char) symbol])
 
-static const Token token_value_table[0400] =
+static const i8 token_value_table[0400] =
 {
   ['+'] = +1,
   ['-'] = -1,

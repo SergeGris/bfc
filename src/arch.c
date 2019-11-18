@@ -86,17 +86,16 @@ tokens_to_asm (ProgramSource *const source,
   str_append (&output, &output_length, start_init);
 
   /* Convert tokens to machine code.  */
-  int errorcode = 0;
-  for (size_t i = 0; i < source->length && errorcode == 0; i++)
+  for (size_t i = 0; i < source->length; i++)
     {
       const Command current = source->tokens[i];
       switch (current.token)
         {
         case T_INCDEC:
           if (current.value > 0)
-            str_append (&output, &output_length, increment_current_value, +current.value & 0xFF);
+            str_append (&output, &output_length, increment_current_value, +current.value);
           else if (current.value < 0)
-            str_append (&output, &output_length, decrement_current_value, -current.value & 0xFF);
+            str_append (&output, &output_length, decrement_current_value, -current.value);
           else
             {
               /* Command has no effect.  */

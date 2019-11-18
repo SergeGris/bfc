@@ -21,12 +21,10 @@
 /config.cache
 /config.log
 /config.status
-/configure
 /gnulib
 /gnulib-tests
 /lib/*~
 /lib/Makefile
-/lib/Makefile.in
 /po/*~
 /po/*.gmo
 /po/*.po
@@ -34,10 +32,8 @@
 /po/Makevars.template
 /po/POTFILES
 /src/*~
-/src/progs.mk
 /src/version.c
 /src/version.h
 Makefile
-Makefile.in
 THANKS
 /maint.mk

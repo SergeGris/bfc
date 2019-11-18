@@ -198,10 +198,10 @@ diagnose_leading_hyphen (int argc, char **argv)
 static void
 parseopt (int argc, char **argv)
 {
+  int optc = -1;
+
   parse_long_options (argc, argv, PROGRAM_NAME, PACKAGE_NAME, Version, usage, AUTHORS,
                       (const char *) NULL);
-
-  int optc = -1;
 
   while ((optc = getopt_long (argc, argv, "o:O:scg", long_options, NULL)) >= 0)
     switch (optc)
@@ -216,11 +216,9 @@ parseopt (int argc, char **argv)
           error (0, 0, _("invalid optimization level %s"), optarg);
         optimization_level = *optarg - '0';
         if (optimization_level > 1)
-          {
-            /* Maximum optimization level is first, if after '-O' costs 2
-               or greater number, then replace it by 1.  */
-            optimization_level = 1;
-          }
+          /* Maximum optimization level is first, if after '-O' costs 2
+             or greater number, then replace it by 1.  */
+          optimization_level = 1;
         break;
       case 's':
         do_assemble = do_link = false;

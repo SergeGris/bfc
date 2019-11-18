@@ -44,7 +44,7 @@ tokenize (const char *const source,
           Command **out_result,
           size_t *out_result_len)
 {
-  /* Count [ and ] commands. Difference should be 0 at the end of the program, so
+  /* Count [ and ] commands.  Difference should be 0 at the end of the program, so
      that all jumps have a matching label.  */
   size_t opening_label_count = 0;
   size_t closing_label_count = 0;
