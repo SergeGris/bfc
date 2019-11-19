@@ -1,4 +1,4 @@
-# Make ng-coreutils programs.                             -*-Makefile-*-
+# Make bfc programs.                             -*-Makefile-*-
 # This is included by the top-level Makefile.am.
 
 ## Copyright (C) 1990-2019 Free Software Foundation, Inc.

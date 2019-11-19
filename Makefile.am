@@ -1,4 +1,4 @@
-# Make coreutils.					-*-Makefile-*-
+# Make bfc.					-*-Makefile-*-
 
 # Copyright (C) 1990-2019 Free Software Foundation, Inc.
 

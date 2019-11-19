@@ -224,8 +224,7 @@ parseopt (int argc, char **argv)
         do_assemble = do_link = false;
         break;
       case 'c':
-        do_assemble = true;
-        do_link = false;
+        do_assemble = !(do_link = false);
         break;
       case 'g':
         with_debug_info = true;
